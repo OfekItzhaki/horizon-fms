@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [isPhotoOnly, setIsPhotoOnly] = useState(false);
+  const [isDocumentOnly, setIsDocumentOnly] = useState(false);
 
   const { data: filesData, isLoading: filesLoading } = useQuery({
     queryKey: ['files', searchTerm, selectedFolderId, isPhotoOnly],
@@ -18,6 +19,27 @@ const Dashboard = () => {
       isPhoto: isPhotoOnly || undefined,
     }),
   });
+
+  // Filter documents on frontend (common document mime types)
+  const documentMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument',
+    'application/vnd.ms-excel',
+    'application/vnd.ms-powerpoint',
+    'text/',
+    'application/rtf',
+    'application/vnd.oasis.opendocument',
+  ];
+
+  const filteredFiles = filesData?.files.filter(file => {
+    if (isDocumentOnly) {
+      return documentMimeTypes.some(mimeType => 
+        file.mimeType.toLowerCase().startsWith(mimeType.toLowerCase())
+      );
+    }
+    return true;
+  }) || [];
 
   const { data: foldersData } = useQuery({
     queryKey: ['folders'],
@@ -33,6 +55,8 @@ const Dashboard = () => {
           onSearchChange={setSearchTerm}
           isPhotoOnly={isPhotoOnly}
           onPhotoOnlyChange={setIsPhotoOnly}
+          isDocumentOnly={isDocumentOnly}
+          onDocumentOnlyChange={setIsDocumentOnly}
         />
       </header>
       
@@ -47,9 +71,9 @@ const Dashboard = () => {
         
         <main style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
           <FileList
-            files={filesData?.files || []}
+            files={filteredFiles}
             isLoading={filesLoading}
-            totalCount={filesData?.totalCount || 0}
+            totalCount={isDocumentOnly ? filteredFiles.length : (filesData?.totalCount || 0)}
           />
         </main>
       </div>

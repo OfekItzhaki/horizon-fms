@@ -23,26 +23,34 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
       {files.length === 0 ? (
         <p>No files found</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
           <thead>
-            <tr style={{ borderBottom: '2px solid #ccc' }}>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Name</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>Size</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Type</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Tags</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Date</th>
+            <tr style={{ borderBottom: '2px solid #ccc', background: '#f5f5f5' }}>
+              <th style={{ textAlign: 'left', padding: '0.75rem', borderRight: '1px solid #ddd' }}>Name</th>
+              <th style={{ textAlign: 'right', padding: '0.75rem', borderRight: '1px solid #ddd' }}>Size</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', borderRight: '1px solid #ddd' }}>Type</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', borderRight: '1px solid #ddd' }}>Tags</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem' }}>Date</th>
             </tr>
           </thead>
           <tbody>
-            {files.map((file) => (
-              <tr key={file.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.5rem' }}>{file.path.split('\\').pop() || file.path}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>{formatSize(file.size)}</td>
-                <td style={{ padding: '0.5rem' }}>{file.mimeType}</td>
-                <td style={{ padding: '0.5rem' }}>{file.tags.join(', ') || '-'}</td>
-                <td style={{ padding: '0.5rem' }}>{new Date(file.createdDate).toLocaleDateString()}</td>
-              </tr>
-            ))}
+            {files.map((file) => {
+              // Extract just the filename from the path, removing drive letters and long paths
+              const getFileName = (path: string) => {
+                const normalized = path.replace(/^[A-Z]:\\?/, '').replace(/\\/g, '/');
+                return normalized.split('/').pop() || path;
+              };
+              
+              return (
+                <tr key={file.id} style={{ borderBottom: '1px solid #ddd' }}>
+                  <td style={{ padding: '0.75rem', borderRight: '1px solid #ddd' }}>{getFileName(file.path)}</td>
+                  <td style={{ textAlign: 'right', padding: '0.75rem', borderRight: '1px solid #ddd' }}>{formatSize(file.size)}</td>
+                  <td style={{ padding: '0.75rem', borderRight: '1px solid #ddd' }}>{file.mimeType}</td>
+                  <td style={{ padding: '0.75rem', borderRight: '1px solid #ddd' }}>{file.tags.join(', ') || '-'}</td>
+                  <td style={{ padding: '0.75rem' }}>{new Date(file.createdDate).toLocaleDateString()}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
