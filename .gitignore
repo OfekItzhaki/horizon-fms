@@ -28,21 +28,6 @@ bld/
 *.userosscache
 *.suo
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
 # .NET Core
 project.lock.json
 project.fragment.lock.json
@@ -54,11 +39,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
 # React / Vite
 FileManagementSystem.Web/dist/
 FileManagementSystem.Web/.vite/
 FileManagementSystem.Web/*.local
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
 # Database
 *.db
@@ -77,6 +65,7 @@ logs/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
 
 # IDE
 .idea/
@@ -92,3 +81,17 @@ Thumbs.db
 *.tmp
 *.temp
 *.cache
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.nuxt/

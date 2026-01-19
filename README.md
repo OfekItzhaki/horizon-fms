@@ -1,49 +1,83 @@
 # File Management System
 
-A production-ready C# desktop application (.NET 8) for managing files and photos using Clean Architecture. Built with WPF for the UI layer.
+A production-ready file management application built with **Clean Architecture**, featuring a **React + TypeScript** frontend and **ASP.NET Core Web API** backend.
 
-## Features
+## 🚀 Features
 
 - **Directory Scanning**: Async directory scanning with progress reporting
 - **File Upload/Organization**: Automatic file deduplication by SHA256 hash
 - **Photo Metadata Extraction**: EXIF data extraction (date, GPS, camera info) via SixLabors.ImageSharp
 - **Tagging & Search**: Full-text search with EF Core, tag-based filtering
 - **Thumbnails**: Async thumbnail generation for photos
-- **Folder Hierarchy**: TreeView navigation with hierarchical folder structure
-- **Drag & Drop**: File upload via drag-and-drop
+- **Folder Hierarchy**: Tree navigation with hierarchical folder structure
+- **Drag & Drop**: File upload via drag-and-drop (React)
 - **Delete/Rename**: File operations with undo capability (planned)
-- **Modern C#**: Uses records, primary constructors, and async/await throughout
+- **Modern Stack**: .NET 8, React 19, TypeScript, Clean Architecture
 
-## Architecture
+## 🏗️ Architecture
 
-The solution follows Clean Architecture principles with clear separation of concerns:
+The solution follows **Clean Architecture** principles with clear separation of concerns:
 
 ```
 FileManagementSystem/
 ├── Domain/              # Entities and domain exceptions
 ├── Application/         # DTOs, Commands/Queries (MediatR), Validators (FluentValidation)
 ├── Infrastructure/      # EF Core DbContext, Repositories, Services
-├── Presentation/        # WPF UI layer
+├── API/                 # ASP.NET Core Web API (REST endpoints)
+├── Web/                 # React + TypeScript frontend
 └── Tests/              # xUnit unit and integration tests
 ```
 
-## Technology Stack
+## 🛠️ Technology Stack
 
+### Backend
 - **.NET 8.0** - Target framework
-- **WPF** - Desktop UI framework
+- **ASP.NET Core Web API** - RESTful API
 - **Entity Framework Core 8.0** - ORM with SQLite provider
 - **MediatR 12.2.0** - CQRS pattern implementation
 - **FluentValidation 11.9.0** - Command validation
 - **Serilog** - Structured logging (file and console sinks)
 - **SixLabors.ImageSharp 3.1.2** - Image processing and EXIF extraction
-- **xUnit + Moq** - Unit testing framework
 
-## Getting Started
+### Frontend
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **React Query (TanStack Query)** - Data fetching and caching
+- **React Router** - Navigation
+- **Axios** - HTTP client
+
+## 📦 Getting Started
 
 ### Prerequisites
 
 - .NET 8.0 SDK or later
-- Visual Studio 2022 or VS Code with C# extension
+- Node.js 18+ and npm
+- Visual Studio 2022 or VS Code
+
+### Running the Application
+
+#### 1. Start the API Backend
+
+```bash
+cd FileManagementSystem.API
+dotnet run
+```
+
+The API will be available at:
+- HTTP: `http://localhost:5295`
+- HTTPS: `https://localhost:7136`
+- Swagger UI: `https://localhost:7136/swagger`
+
+#### 2. Start the React Frontend
+
+```bash
+cd FileManagementSystem.Web
+npm install
+npm run dev
+```
+
+The React app will be available at `http://localhost:5173` (or the port Vite assigns)
 
 ### Building the Solution
 
@@ -54,42 +88,18 @@ dotnet restore
 # Build the solution
 dotnet build
 
-# Or build a specific project
-dotnet build FileManagementSystem.Presentation/FileManagementSystem.Presentation.csproj
-```
-
-### Running the Application
-
-```bash
-# Run from the Presentation project
-cd FileManagementSystem.Presentation
-dotnet run
-
-# Or build and run the executable
-dotnet build -c Release
-.\bin\Release\net8.0-windows\FileManagementSystem.Presentation.exe
+# Build React app
+cd FileManagementSystem.Web
+npm run build
 ```
 
 ### Database Setup
 
-The application uses SQLite and will automatically create the database on first run. The database file (`filemanager.db`) will be created in the output directory.
+The application uses SQLite and will automatically create the database on first run. The database file (`filemanager.db`) will be created in the API project's output directory.
 
-To create or update migrations:
+## 🔧 Configuration
 
-```bash
-# Navigate to Infrastructure project
-cd FileManagementSystem.Infrastructure
-
-# Create a new migration
-dotnet ef migrations add InitialCreate --startup-project ../FileManagementSystem.Presentation
-
-# Update the database
-dotnet ef database update --startup-project ../FileManagementSystem.Presentation
-```
-
-## Configuration
-
-Configuration is managed via `appsettings.json` in the Presentation project:
+### API Configuration (`FileManagementSystem.API/appsettings.json`)
 
 ```json
 {
@@ -99,64 +109,34 @@ Configuration is managed via `appsettings.json` in the Presentation project:
   "ThumbnailSettings": {
     "MaxWidth": 200,
     "MaxHeight": 200
-  },
-  "Serilog": {
-    // Logging configuration
   }
 }
 ```
 
-## Usage
+### Frontend Configuration
+
+The React app uses a Vite proxy to connect to the API. The proxy is configured in `FileManagementSystem.Web/vite.config.ts`.
+
+## 📖 Usage
 
 ### Scanning a Directory
 
-1. Click **File > Scan Directory...**
-2. Select a directory to scan
-3. Monitor progress in the progress bar
-4. Files are automatically indexed and duplicates are detected
+1. Use the API endpoint: `POST /api/files/scan` (to be implemented)
+2. Or use the file upload feature
 
 ### Searching Files
 
-- Type in the search box and press Enter or click Search
-- Use "Photos Only" checkbox to filter by photo files
-- Click Clear to reset the search
+- Use the search bar in the React UI
+- Filter by photos only
+- Search by tags, filename, or metadata
 
 ### Managing Files
 
-- **Upload**: File > Upload File... or drag-and-drop files into the window
-- **Rename**: Select a file and click Edit > Rename
-- **Delete**: Select a file and click Edit > Delete (moves to recycle bin)
+- **Upload**: Drag and drop files or use the upload button
+- **Rename**: Click on a file and use the rename action
+- **Delete**: Select a file and delete (moves to recycle bin)
 
-### Navigating Folders
-
-- Use the folder tree on the left to navigate directories
-- Click on a folder to see its files in the main list view
-
-## Project Structure
-
-### Domain Layer
-- `Entities/`: FileItem, Folder entities
-- `Exceptions/`: Domain-specific exceptions (FileDuplicateException, etc.)
-
-### Application Layer
-- `Commands/`: MediatR commands (ScanDirectoryCommand, UploadFileCommand, etc.)
-- `Queries/`: MediatR queries (SearchFilesQuery, GetFoldersQuery, etc.)
-- `DTOs/`: Data transfer objects for UI
-- `Handlers/`: Command and query handlers
-- `Validators/`: FluentValidation validators
-- `Interfaces/`: Repository and service interfaces
-
-### Infrastructure Layer
-- `Data/`: AppDbContext and EF Core configuration
-- `Repositories/`: Repository implementations (FileRepository, FolderRepository, UnitOfWork)
-- `Services/`: MetadataService (EXIF extraction), StorageService (file operations, hashing)
-
-### Presentation Layer
-- `MainWindow.xaml/cs`: Main UI window
-- `ViewModels/`: View models for data binding
-- `App.xaml.cs`: Application startup with DI configuration
-
-## Testing
+## 🧪 Testing
 
 Run tests with:
 
@@ -164,39 +144,53 @@ Run tests with:
 dotnet test
 ```
 
-To run with coverage:
+## 📝 Project Structure
 
-```bash
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
-```
+### Domain Layer
+- `Entities/`: FileItem, Folder, User entities
+- `Exceptions/`: Domain-specific exceptions
 
-## Logging
+### Application Layer
+- `Commands/`: MediatR commands (ScanDirectoryCommand, UploadFileCommand, etc.)
+- `Queries/`: MediatR queries (SearchFilesQuery, GetFoldersQuery, etc.)
+- `DTOs/`: Data transfer objects
+- `Handlers/`: Command and query handlers
+- `Validators/`: FluentValidation validators
+- `Behaviors/`: MediatR pipeline behaviors (logging, validation, authorization)
 
-Logs are written to:
-- Console output (during development)
-- `logs/filemanager.log` file (rolling daily)
+### Infrastructure Layer
+- `Data/`: AppDbContext and EF Core configuration
+- `Repositories/`: Repository implementations
+- `Services/`: MetadataService, StorageService, AuthenticationService, etc.
 
-Log level can be configured in `appsettings.json`.
+### API Layer
+- `Controllers/`: REST API endpoints (FilesController, FoldersController)
 
-## Best Practices Implemented
+### Web Layer (React)
+- `src/components/`: React components (Dashboard, FileList, FolderTree, etc.)
+- `src/services/`: API client and services
+- `src/types/`: TypeScript type definitions
 
+## ✅ Best Practices Implemented
+
+- ✅ **Clean Architecture**: Clear separation of concerns
+- ✅ **CQRS**: Commands and Queries separation with MediatR
 - ✅ **Async/Await**: All I/O operations are async
 - ✅ **Dependency Injection**: Microsoft.Extensions.DependencyInjection throughout
 - ✅ **Validation**: FluentValidation on all commands
 - ✅ **Logging**: Serilog with structured logging
 - ✅ **Error Handling**: Custom exceptions and try-catch with user-friendly messages
 - ✅ **Security**: Path sanitization, file size/type validation, SHA256 hashing
-- ✅ **Performance**: Background tasks for heavy operations, EF AsNoTracking for reads, ListView virtualization
-- ✅ **Patterns**: Repository, UnitOfWork, Factory, Observer (progress updates)
+- ✅ **Performance**: Background tasks, EF AsNoTracking for reads, React Query caching
+- ✅ **Type Safety**: TypeScript throughout the frontend
 
-## License
+## 📄 License
 
 This project is provided as-is for demonstration purposes.
 
-## Contributing
+## 🤝 Contributing
 
-This is a template/production-ready application. Feel free to extend it with additional features:
-
+Feel free to extend this application with additional features:
 - Cloud storage integration (Azure Blob, AWS S3)
 - Batch operations
 - Advanced search filters
