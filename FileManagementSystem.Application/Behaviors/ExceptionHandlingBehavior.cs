@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using FluentValidation;
 using FileManagementSystem.Domain.Exceptions;
+using FileManagementSystem.Domain.Exceptions;
 
 namespace FileManagementSystem.Application.Behaviors;
 
@@ -25,6 +26,12 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
         try
         {
             return await next();
+        }
+        catch (FileDuplicateException ex)
+        {
+            _logger.LogInformation(ex, "Duplicate file detected in {RequestType}: {FilePath}",
+                typeof(TRequest).Name, ex.FilePath);
+            throw; // Re-throw to be handled by middleware
         }
         catch (DomainException ex)
         {
