@@ -29,7 +29,7 @@ public class WindsorInstaller : IWindsorInstaller
 
     public void Install(IWindsorContainer container, IConfigurationStore store)
     {
-        // DbContext - PerWebRequest (scoped per HTTP request)
+        // DbContext - Scoped (managed by middleware)
         container.Register(
             Component.For<AppDbContext>()
                 .UsingFactoryMethod(() =>
@@ -42,7 +42,7 @@ public class WindsorInstaller : IWindsorInstaller
                         .EnableServiceProviderCaching();
                     return new AppDbContext(optionsBuilder.Options);
                 })
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
         // Memory Cache - Singleton
@@ -53,31 +53,31 @@ public class WindsorInstaller : IWindsorInstaller
                 .LifestyleSingleton()
         );
 
-        // Repositories - PerWebRequest (scoped per HTTP request)
+        // Repositories - Scoped (managed by middleware)
         container.Register(
             Component.For<IUnitOfWork>()
                 .ImplementedBy<UnitOfWork>()
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For<IFileRepository>()
                 .ImplementedBy<FileRepository>()
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For<IFolderRepository>()
                 .ImplementedBy<CachedFolderRepository>()
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
-        // Services - PerWebRequest (scoped per HTTP request)
+        // Services - Scoped (managed by middleware)
         container.Register(
             Component.For<IMetadataService>()
                 .ImplementedBy<MetadataService>()
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For<IStorageService>()
                 .ImplementedBy<StorageService>()
                 .DependsOn(
                     Dependency.OnValue<IConfiguration>(_configuration),
                     Dependency.OnComponent<ILogger<StorageService>, ILogger<StorageService>>()
                 )
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
         // Register ILogger<T> factory
@@ -124,23 +124,23 @@ public class WindsorInstaller : IWindsorInstaller
             Classes.FromAssembly(assembly)
                 .BasedOn(typeof(IRequestHandler<,>))
                 .WithServiceAllInterfaces()
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
         // MediatR pipeline behaviors
         container.Register(
             Component.For(typeof(IPipelineBehavior<,>))
                 .ImplementedBy(typeof(LoggingBehavior<,>))
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For(typeof(IPipelineBehavior<,>))
                 .ImplementedBy(typeof(AuthorizationBehavior<,>))
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For(typeof(IPipelineBehavior<,>))
                 .ImplementedBy(typeof(ValidationBehavior<,>))
-                .LifestylePerWebRequest(),
+                .LifestyleScoped(),
             Component.For(typeof(IPipelineBehavior<,>))
                 .ImplementedBy(typeof(ExceptionHandlingBehavior<,>))
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
         // FluentValidation validators
@@ -148,7 +148,7 @@ public class WindsorInstaller : IWindsorInstaller
             Classes.FromAssembly(assembly)
                 .BasedOn(typeof(IValidator<>))
                 .WithServiceAllInterfaces()
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
 
         // MediatR service factory - MediatR 12.x uses IServiceProvider
@@ -160,7 +160,7 @@ public class WindsorInstaller : IWindsorInstaller
                     var serviceProvider = new WindsorServiceProvider(kernel.Resolve<Castle.Windsor.IWindsorContainer>());
                     return new MediatR.Mediator(serviceProvider);
                 })
-                .LifestylePerWebRequest()
+                .LifestyleScoped()
         );
     }
 }
