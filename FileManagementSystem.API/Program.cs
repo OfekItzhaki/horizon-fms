@@ -100,11 +100,23 @@ builder.Services.AddSingleton<IAuthorizationService>(sp =>
     var windsorContainer = sp.GetRequiredService<IWindsorContainer>();
     return windsorContainer.Resolve<IAuthorizationService>();
 });
-builder.Services.AddScoped<IMediator>(sp => 
+
+// MediatR - use ASP.NET Core DI for handlers and pipeline behaviors
+// This is more reliable than Castle Windsor integration
+var assembly = typeof(ScanDirectoryCommand).Assembly;
+builder.Services.AddMediatR(cfg =>
 {
-    var windsorContainer = sp.GetRequiredService<IWindsorContainer>();
-    return windsorContainer.Resolve<IMediator>();
+    cfg.RegisterServicesFromAssembly(assembly);
+    
+    // Add pipeline behaviors (order matters - they execute in this order)
+    cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
+    cfg.AddOpenBehavior(typeof(AuthorizationBehavior<,>));
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+    cfg.AddOpenBehavior(typeof(ExceptionHandlingBehavior<,>));
 });
+
+// FluentValidation validators
+builder.Services.AddValidatorsFromAssembly(assembly);
 
 // DbContext - register directly for EF Core compatibility
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 

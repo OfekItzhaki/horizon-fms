@@ -149,52 +149,8 @@ public class WindsorInstaller : IWindsorInstaller
                 .LifestyleSingleton()
         );
 
-        // MediatR - register handlers from assembly
-        var assembly = typeof(ScanDirectoryCommand).Assembly;
-        container.Register(
-            Classes.FromAssembly(assembly)
-                .BasedOn(typeof(IRequestHandler<,>))
-                .WithServiceAllInterfaces()
-                .LifestyleScoped()
-        );
-
-        // MediatR pipeline behaviors
-        container.Register(
-            Component.For(typeof(IPipelineBehavior<,>))
-                .ImplementedBy(typeof(LoggingBehavior<,>))
-                .LifestyleScoped(),
-            Component.For(typeof(IPipelineBehavior<,>))
-                .ImplementedBy(typeof(AuthorizationBehavior<,>))
-                .LifestyleScoped(),
-            Component.For(typeof(IPipelineBehavior<,>))
-                .ImplementedBy(typeof(ValidationBehavior<,>))
-                .LifestyleScoped(),
-            Component.For(typeof(IPipelineBehavior<,>))
-                .ImplementedBy(typeof(ExceptionHandlingBehavior<,>))
-                .LifestyleScoped()
-        );
-
-        // FluentValidation validators
-        container.Register(
-            Classes.FromAssembly(assembly)
-                .BasedOn(typeof(IValidator<>))
-                .WithServiceAllInterfaces()
-                .LifestyleScoped()
-        );
-
-        // MediatR service factory - MediatR 12.x uses IServiceProvider
-        container.Register(
-            Component.For<IMediator>()
-                .UsingFactoryMethod(kernel =>
-                {
-                    // Create a service provider adapter for MediatR
-                    // Resolve the container (now registered above)
-                    var windsorContainer = kernel.Resolve<Castle.Windsor.IWindsorContainer>();
-                    var serviceProvider = new WindsorServiceProvider(windsorContainer);
-                    return new MediatR.Mediator(serviceProvider);
-                })
-                .LifestyleScoped()
-        );
+        // MediatR, handlers, pipeline behaviors, and validators are registered in Program.cs
+        // using ASP.NET Core DI for better compatibility and reliability
     }
 }
 
