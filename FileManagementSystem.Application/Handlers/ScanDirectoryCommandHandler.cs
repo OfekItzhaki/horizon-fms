@@ -55,7 +55,10 @@ public class ScanDirectoryCommandHandler : IRequestHandler<ScanDirectoryCommand,
             var allFiles = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories);
             var totalFiles = allFiles.Length;
             
-            request.Progress?.Report(new ProgressReportDto
+            _logger.LogInformation("Starting directory scan: {DirectoryPath}, {TotalFiles} files found", 
+                directoryPath, totalFiles);
+            
+            ReportProgress(request, new ProgressReportDto
             {
                 ProcessedItems = 0,
                 TotalItems = totalFiles,
@@ -144,9 +147,10 @@ public class ScanDirectoryCommandHandler : IRequestHandler<ScanDirectoryCommand,
                     if (filesProcessed % 100 == 0)
                     {
                         await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        _logger.LogDebug("Batch saved {Count} files", filesProcessed);
                     }
                     
-                    request.Progress?.Report(new ProgressReportDto
+                    ReportProgress(request, new ProgressReportDto
                     {
                         ProcessedItems = filesProcessed + filesSkipped,
                         TotalItems = totalFiles,
@@ -154,9 +158,19 @@ public class ScanDirectoryCommandHandler : IRequestHandler<ScanDirectoryCommand,
                         IsCompleted = false
                     });
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.LogWarning(ex, "Access denied processing file: {FilePath}", filePath);
+                    filesSkipped++;
+                }
+                catch (IOException ex)
+                {
+                    _logger.LogWarning(ex, "IO error processing file: {FilePath}", filePath);
+                    filesSkipped++;
+                }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error processing file: {FilePath}", filePath);
+                    _logger.LogError(ex, "Unexpected error processing file: {FilePath}", filePath);
                     filesSkipped++;
                 }
             }
@@ -168,7 +182,7 @@ public class ScanDirectoryCommandHandler : IRequestHandler<ScanDirectoryCommand,
             _logger.LogInformation("Scan completed: {Processed} processed, {Skipped} skipped, {Folders} folders created",
                 filesProcessed, filesSkipped, foldersCreated);
             
-            request.Progress?.Report(new ProgressReportDto
+            ReportProgress(request, new ProgressReportDto
             {
                 ProcessedItems = totalFiles,
                 TotalItems = totalFiles,
@@ -176,12 +190,36 @@ public class ScanDirectoryCommandHandler : IRequestHandler<ScanDirectoryCommand,
                 IsCompleted = true
             });
             
+            request.ProgressObservable?.Complete();
+            
             return new ScanDirectoryResult(filesProcessed, filesSkipped, foldersCreated);
         }
-        catch
+        catch (OperationCanceledException)
         {
+            _logger.LogWarning("Directory scan was cancelled: {DirectoryPath}", directoryPath);
             await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+            request.ProgressObservable?.ReportError(new OperationCanceledException("Scan was cancelled"));
             throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fatal error during directory scan: {DirectoryPath}", directoryPath);
+            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+            request.ProgressObservable?.ReportError(ex);
+            throw;
+        }
+    }
+    
+    private void ReportProgress(ScanDirectoryCommand request, ProgressReportDto progress)
+    {
+        try
+        {
+            request.Progress?.Report(progress);
+            request.ProgressObservable?.Report(progress);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error reporting progress");
         }
     }
     
