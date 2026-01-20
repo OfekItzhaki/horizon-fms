@@ -185,11 +185,6 @@ public class DatabaseInitializer
     {
         try
         {
-            var cFolder = await _dbContext.Set<Folder>()
-                .FirstOrDefaultAsync(f => f.Name == "C:" || f.Path == "C:" || f.Path == "C:\\");
-
-            if (cFolder == null) return;
-
             var storageBasePath = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "FileManagementSystem",
@@ -197,35 +192,63 @@ public class DatabaseInitializer
             );
             var defaultFolderPath = System.IO.Path.Combine(storageBasePath, "Default");
 
+            // Ensure Default folder exists
             var defaultFolder = await _dbContext.Set<Folder>()
-                .FirstOrDefaultAsync(f => f.Path == defaultFolderPath);
+                .FirstOrDefaultAsync(f => f.Path == defaultFolderPath || f.Name == "Default");
 
             if (defaultFolder == null)
             {
-                cFolder.Name = "Default";
-                cFolder.Path = defaultFolderPath;
-                await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("Renamed C: folder to Default folder");
-            }
-            else
-            {
-                var filesInCFolder = await _dbContext.Set<FileItem>()
-                    .Where(f => f.FolderId == cFolder.Id)
-                    .ToListAsync();
-
-                foreach (var file in filesInCFolder)
+                // Create Default folder if it doesn't exist
+                defaultFolder = new Folder
                 {
-                    file.FolderId = defaultFolder.Id;
-                }
-
-                _dbContext.Set<Folder>().Remove(cFolder);
+                    Name = "Default",
+                    Path = defaultFolderPath,
+                    ParentFolderId = null,
+                    CreatedDate = DateTime.UtcNow
+                };
+                _dbContext.Set<Folder>().Add(defaultFolder);
                 await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("Moved {Count} files from C: folder to Default folder and deleted C: folder", filesInCFolder.Count);
+                _logger.LogInformation("Created Default folder: {Path}", defaultFolderPath);
+            }
+
+            // Rename any C: folder to Default or move its files
+            var cFolder = await _dbContext.Set<Folder>()
+                .FirstOrDefaultAsync(f => f.Name == "C:" || f.Path == "C:" || f.Path == "C:\\");
+
+            if (cFolder != null)
+            {
+                if (cFolder.Id == defaultFolder.Id)
+                {
+                    // Already the same folder, just update name/path if needed
+                    if (cFolder.Name != "Default" || cFolder.Path != defaultFolderPath)
+                    {
+                        cFolder.Name = "Default";
+                        cFolder.Path = defaultFolderPath;
+                        await _dbContext.SaveChangesAsync();
+                        _logger.LogInformation("Updated C: folder to Default folder");
+                    }
+                }
+                else
+                {
+                    // Move files from C: to Default and delete C: folder
+                    var filesInCFolder = await _dbContext.Set<FileItem>()
+                        .Where(f => f.FolderId == cFolder.Id)
+                        .ToListAsync();
+
+                    foreach (var file in filesInCFolder)
+                    {
+                        file.FolderId = defaultFolder.Id;
+                    }
+
+                    _dbContext.Set<Folder>().Remove(cFolder);
+                    await _dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Moved {Count} files from C: folder to Default folder and deleted C: folder", filesInCFolder.Count);
+                }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not rename C: folder to Default folder");
+            _logger.LogWarning(ex, "Could not ensure Default folder exists");
         }
     }
 }
