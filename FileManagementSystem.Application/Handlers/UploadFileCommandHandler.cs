@@ -67,63 +67,89 @@ public class UploadFileCommandHandler : IRequestHandler<UploadFileCommand, Uploa
             throw new FileDuplicateException(normalizedSourcePath, hash);
         }
         
-        // Determine destination path
+        // Determine destination path - always store in managed storage location
         string destinationPath;
-        if (!string.IsNullOrEmpty(request.DestinationFolder))
+        var storageBasePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "FileManagementSystem",
+            "Storage"
+        );
+        
+        Folder? targetFolder = null;
+        
+        // If a folder ID is provided, use that folder
+        if (request.DestinationFolderId.HasValue)
         {
-            var destFolder = Path.GetFullPath(request.DestinationFolder);
-            Directory.CreateDirectory(destFolder);
-            
-            var fileName = Path.GetFileName(normalizedSourcePath);
-            destinationPath = Path.Combine(destFolder, fileName);
-        }
-        else if (request.OrganizeByDate)
-        {
-            // Organize by date from file metadata or file system
-            var fileInfo = new FileInfo(normalizedSourcePath);
-            var dateFolder = fileInfo.CreationTime.ToString("yyyy-MM");
-            var baseFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
-                "FileManagementSystem", "Organized", dateFolder);
-            Directory.CreateDirectory(baseFolder);
-            
-            destinationPath = Path.Combine(baseFolder, Path.GetFileName(normalizedSourcePath));
-        }
-        else
-        {
-            // Keep original location
-            destinationPath = normalizedSourcePath;
+            targetFolder = await _unitOfWork.Folders.GetByIdAsync(request.DestinationFolderId.Value, cancellationToken);
+            if (targetFolder == null)
+            {
+                _logger.LogWarning("Destination folder not found: {FolderId}, using default folder", request.DestinationFolderId.Value);
+            }
         }
         
-        // Copy file if destination is different
-        if (destinationPath != normalizedSourcePath)
+        // If no folder specified or folder not found, use/create "Default" folder
+        if (targetFolder == null)
         {
-            destinationPath = await _storageService.SaveFileAsync(normalizedSourcePath, destinationPath, cancellationToken);
+            var defaultFolderPath = Path.Combine(storageBasePath, "Default");
+            try
+            {
+                targetFolder = await _unitOfWork.Folders.GetOrCreateByPathAsync(defaultFolderPath, cancellationToken);
+                _logger.LogInformation("Using default folder for upload: {FolderPath}", defaultFolderPath);
+            }
+            catch (InvalidOperationException)
+            {
+                // If default folder creation fails, create it manually
+                targetFolder = new Folder
+                {
+                    Name = "Default",
+                    Path = defaultFolderPath,
+                    ParentFolderId = null,
+                    CreatedDate = DateTime.UtcNow
+                };
+                await _unitOfWork.Folders.AddAsync(targetFolder, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Created default folder: {FolderPath}", defaultFolderPath);
+            }
         }
         
-        // Get or create folder
-        var folderPath = Path.GetDirectoryName(destinationPath);
-        var folder = folderPath != null 
-            ? await _unitOfWork.Folders.GetOrCreateByPathAsync(folderPath, cancellationToken)
-            : null;
+        // Build destination path using the target folder
+        var fileName = Path.GetFileName(normalizedSourcePath);
+        destinationPath = Path.Combine(targetFolder.Path, fileName);
         
-        // Extract metadata for photos
-        var isPhoto = await _metadataService.IsPhotoFileAsync(destinationPath, cancellationToken);
+        // Ensure the directory exists
+        Directory.CreateDirectory(targetFolder.Path);
+        
+        // Always copy file to managed storage location (now compresses automatically)
+        var compressedPath = await _storageService.SaveFileAsync(normalizedSourcePath, destinationPath, cancellationToken);
+        
+        // Get original filename from source file (used for display and MIME type)
+        var originalFileName = Path.GetFileName(normalizedSourcePath);
+        var displayPath = destinationPath; // Store storage path (without .gz) for file location
+        
+        // Use the target folder we already determined
+        var folder = targetFolder;
+        
+        // Extract metadata for photos (need to decompress temporarily or read from original)
+        // For now, we'll extract metadata from the original source file before compression
+        var isPhoto = await _metadataService.IsPhotoFileAsync(normalizedSourcePath, cancellationToken);
         PhotoMetadata? photoMetadata = null;
         
         if (isPhoto)
         {
-            photoMetadata = await _metadataService.ExtractPhotoMetadataAsync(destinationPath, cancellationToken);
+            photoMetadata = await _metadataService.ExtractPhotoMetadataAsync(normalizedSourcePath, cancellationToken);
         }
         
         // Create file item
-        var destFileInfo = new FileInfo(destinationPath);
+        var compressedFileInfo = new FileInfo(compressedPath);
         var fileItem = new FileItem
         {
-            Path = destinationPath,
+            Path = displayPath, // Store storage path for file location (without .gz)
+            FileName = originalFileName, // Store original filename for display
             Hash = hash,
             HashHex = hashHex,
-            Size = destFileInfo.Length,
-            MimeType = GetMimeType(destinationPath),
+            Size = compressedFileInfo.Length, // Store compressed size (actual disk usage)
+            IsCompressed = true, // Mark as compressed
+            MimeType = GetMimeType(originalFileName), // Use original filename for MIME type
             IsPhoto = isPhoto,
             FolderId = folder?.Id,
             CreatedDate = DateTime.UtcNow,

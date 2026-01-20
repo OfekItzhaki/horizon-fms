@@ -71,7 +71,7 @@ const Dashboard = () => {
         </aside>
         
         <main style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
-          <FileUpload destinationFolder={selectedFolderId} />
+          <FileUpload destinationFolderId={selectedFolderId} />
           <FileList
             files={filteredFiles}
             isLoading={filesLoading}

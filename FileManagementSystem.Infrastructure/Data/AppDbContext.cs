@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Path).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.FileName).IsRequired(false).HasMaxLength(500); // Original filename - nullable to handle existing records
+            entity.Property(e => e.IsCompressed).IsRequired().HasDefaultValue(true);
             entity.Property(e => e.MimeType).HasMaxLength(255);
             entity.Property(e => e.CameraMake).HasMaxLength(100);
             entity.Property(e => e.CameraModel).HasMaxLength(100);

@@ -33,11 +33,11 @@ export const fileApi = {
     return response.data;
   },
 
-  uploadFile: async (file: File, destinationFolder?: string): Promise<any> => {
+  uploadFile: async (file: File, destinationFolderId?: string): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
-    if (destinationFolder) {
-      formData.append('destinationFolder', destinationFolder);
+    if (destinationFolderId) {
+      formData.append('destinationFolderId', destinationFolderId);
     }
     const response = await apiClient.post('/files/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -57,12 +57,37 @@ export const fileApi = {
   addTags: async (id: string, tags: string[]): Promise<void> => {
     await apiClient.post(`/files/${id}/tags`, { tags });
   },
+
+  downloadFile: async (id: string): Promise<string> => {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:5295/api');
+    return `${API_BASE_URL}/files/${id}/download`;
+  },
 };
 
 export const folderApi = {
-  getFolders: async (): Promise<GetFoldersResult> => {
-    const response = await apiClient.get<GetFoldersResult>('/folders');
+  getFolders: async (parentFolderId?: string): Promise<GetFoldersResult> => {
+    const params = parentFolderId ? { parentFolderId } : {};
+    const response = await apiClient.get<GetFoldersResult>('/folders', { params });
     return response.data;
+  },
+
+  createFolder: async (name: string, parentFolderId?: string): Promise<any> => {
+    const response = await apiClient.post('/folders', { 
+      name, 
+      parentFolderId: parentFolderId || null 
+    });
+    return response.data;
+  },
+
+  renameFolder: async (id: string, newName: string): Promise<any> => {
+    const response = await apiClient.put(`/folders/${id}/rename`, { newName });
+    return response.data;
+  },
+
+  deleteFolder: async (id: string, deleteFiles: boolean = false): Promise<void> => {
+    await apiClient.delete(`/folders/${id}`, { 
+      params: { deleteFiles } 
+    });
   },
 };
 

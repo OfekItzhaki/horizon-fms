@@ -10,6 +10,7 @@ export default defineConfig({
         target: 'http://localhost:5295', // Match the API's HTTP port from launchSettings.json
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path, // Keep the /api prefix
       },
     },
   },

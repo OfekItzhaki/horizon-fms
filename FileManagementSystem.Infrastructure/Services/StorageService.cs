@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.IO.Compression;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.Logging;
@@ -35,23 +36,78 @@ public class StorageService : IStorageService
             Directory.CreateDirectory(destinationDir);
         }
         
+        // Add .gz extension for compressed files
+        var compressedPath = destinationPath + ".gz";
+        
         // Ensure destination path is unique if file exists
-        var finalPath = destinationPath;
+        var finalPath = compressedPath;
         var counter = 1;
         while (File.Exists(finalPath))
         {
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(destinationPath);
             var extension = Path.GetExtension(destinationPath);
             var directory = Path.GetDirectoryName(destinationPath);
-            finalPath = Path.Combine(directory ?? "", $"{fileNameWithoutExtension}_{counter}{extension}");
+            finalPath = Path.Combine(directory ?? "", $"{fileNameWithoutExtension}_{counter}{extension}.gz");
             counter++;
         }
         
-        // Use async file operations
+        // Read source file and compress it
+        var sourceFileInfo = new FileInfo(sourcePath);
+        var originalSize = sourceFileInfo.Length;
+        
         await using var sourceStream = File.OpenRead(sourcePath);
-        await using var destinationStream = File.Create(finalPath);
-        await sourceStream.CopyToAsync(destinationStream, cancellationToken);
+        await using var compressedStream = File.Create(finalPath);
+        await using var gzipStream = new GZipStream(compressedStream, CompressionLevel.Optimal);
+        
+        await sourceStream.CopyToAsync(gzipStream, cancellationToken);
+        await gzipStream.FlushAsync(cancellationToken);
+        
+        var compressedSize = new FileInfo(finalPath).Length;
+        var compressionRatio = originalSize > 0 ? (1.0 - (double)compressedSize / originalSize) * 100 : 0;
+        
+        _logger.LogInformation("File compressed: {SourcePath} -> {CompressedPath}, Original: {OriginalSize} bytes, Compressed: {CompressedSize} bytes, Ratio: {CompressionRatio:F2}%",
+            sourcePath, finalPath, originalSize, compressedSize, compressionRatio);
+        
         return finalPath;
+    }
+    
+    public async Task<FileData> ReadFileAsync(string filePath, bool isCompressed, CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"File not found: {filePath}");
+        }
+        
+        // Determine if file is compressed by extension or flag
+        var hasGzExtension = filePath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase);
+        var shouldDecompress = isCompressed || hasGzExtension;
+        
+        byte[] content;
+        string originalFileName;
+        
+        if (shouldDecompress && hasGzExtension)
+        {
+            // Decompress the file
+            await using var compressedStream = File.OpenRead(filePath);
+            await using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
+            await using var memoryStream = new MemoryStream();
+            
+            await gzipStream.CopyToAsync(memoryStream, cancellationToken);
+            content = memoryStream.ToArray();
+            
+            // Extract original filename (remove .gz extension)
+            originalFileName = Path.GetFileNameWithoutExtension(filePath);
+            
+            _logger.LogDebug("File decompressed: {FilePath}, Decompressed size: {Size} bytes", filePath, content.Length);
+        }
+        else
+        {
+            // Read file normally (not compressed)
+            content = await File.ReadAllBytesAsync(filePath, cancellationToken);
+            originalFileName = Path.GetFileName(filePath);
+        }
+        
+        return new FileData(content, originalFileName, shouldDecompress);
     }
     
     public async Task<bool> DeleteFileAsync(string filePath, bool moveToRecycleBin = true, CancellationToken cancellationToken = default)
@@ -92,7 +148,22 @@ public class StorageService : IStorageService
     {
         try
         {
-            var fileHash = await ComputeHashAsync(imagePath, cancellationToken);
+            // Check if file is compressed (has .gz extension or needs to check actual file)
+            var actualImagePath = imagePath;
+            var isCompressed = false;
+            
+            if (File.Exists(imagePath + ".gz"))
+            {
+                actualImagePath = imagePath + ".gz";
+                isCompressed = true;
+            }
+            else if (!File.Exists(actualImagePath))
+            {
+                throw new FileNotFoundException($"Image file not found: {imagePath}");
+            }
+            
+            // Compute hash on actual file (compressed or not) for cache key
+            var fileHash = await ComputeHashAsync(actualImagePath, cancellationToken);
             var hashHex = Convert.ToHexString(fileHash);
             var thumbnailPath = Path.Combine(_thumbnailDirectory, $"{hashHex}.jpg");
             
@@ -101,7 +172,11 @@ public class StorageService : IStorageService
                 return thumbnailPath;
             }
             
-            await using var imageStream = File.OpenRead(imagePath);
+            // For thumbnails, we need to read the decompressed content
+            var fileData = await ReadFileAsync(actualImagePath, isCompressed, cancellationToken);
+            
+            // Load image from decompressed content
+            await using var imageStream = new MemoryStream(fileData.Content);
             using var image = await Image.LoadAsync(imageStream, cancellationToken);
             
             var size = image.Size;

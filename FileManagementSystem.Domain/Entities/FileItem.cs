@@ -6,12 +6,16 @@ public class FileItem
     
     public required string Path { get; set; }
     
+    public string? FileName { get; set; } // Original filename for display - nullable to handle existing records
+    
     public byte[] Hash { get; set; } = Array.Empty<byte>();
     
     // Computed property for EF Core - stored as string in database
     public string HashHex { get; set; } = string.Empty;
     
     public long Size { get; set; }
+    
+    public bool IsCompressed { get; set; } = true; // Default to true - all new files are compressed
     
     public string MimeType { get; set; } = string.Empty;
     

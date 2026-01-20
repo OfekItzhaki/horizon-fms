@@ -34,8 +34,8 @@ public class FileRepository : Repository<FileItem>, IFileRepository
         {
             var term = searchTerm.ToLower();
             query = query.Where(f => 
-                f.Path.ToLower().Contains(term) ||
-                f.MimeType.ToLower().Contains(term) ||
+                (f.Path != null && f.Path.ToLower().Contains(term)) ||
+                (f.MimeType != null && f.MimeType.ToLower().Contains(term)) ||
                 (f.CameraMake != null && f.CameraMake.ToLower().Contains(term)) ||
                 (f.CameraModel != null && f.CameraModel.ToLower().Contains(term)));
         }
@@ -57,7 +57,7 @@ public class FileRepository : Repository<FileItem>, IFileRepository
         
         return await query
             .OrderBy(f => f.CreatedDate) // Add OrderBy to fix EF Core warning
-            .ThenBy(f => f.Path)
+            .ThenBy(f => f.Path ?? string.Empty) // Handle null Path
             .Skip(skip)
             .Take(take)
             .ToListAsync(cancellationToken);
@@ -76,8 +76,8 @@ public class FileRepository : Repository<FileItem>, IFileRepository
         {
             var term = searchTerm.ToLower();
             query = query.Where(f => 
-                f.Path.ToLower().Contains(term) ||
-                f.MimeType.ToLower().Contains(term) ||
+                (f.Path != null && f.Path.ToLower().Contains(term)) ||
+                (f.MimeType != null && f.MimeType.ToLower().Contains(term)) ||
                 (f.CameraMake != null && f.CameraMake.ToLower().Contains(term)) ||
                 (f.CameraModel != null && f.CameraModel.ToLower().Contains(term)));
         }

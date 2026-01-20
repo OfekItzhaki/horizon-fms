@@ -34,8 +34,10 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
 
   const handleOpen = async (file: FileItemDto) => {
     try {
-      // Use the download endpoint to open the file
+      // Use the download endpoint to open the file directly
       const downloadUrl = await fileApi.downloadFile(file.id);
+      
+      // Open the file directly - browser will handle errors if file doesn't exist
       window.open(downloadUrl, '_blank');
     } catch (error) {
       console.error('Error opening file:', error);
@@ -90,12 +92,12 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           }}>
             <colgroup>
-              <col style={{ width: 'auto', minWidth: '200px' }} /> {/* Name - flexible */}
-              <col style={{ width: '100px' }} /> {/* Size */}
-              <col style={{ width: '120px' }} /> {/* Type */}
-              <col style={{ width: '150px' }} /> {/* Tags */}
-              <col style={{ width: '120px' }} /> {/* Date */}
-              <col style={{ width: '180px' }} /> {/* Actions - fixed width for buttons */}
+              <col style={{ width: 'auto', minWidth: '200px' }} />
+              <col style={{ width: '100px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '150px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '180px' }} />
             </colgroup>
             <thead>
               <tr style={{ 
@@ -153,7 +155,8 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
             </thead>
             <tbody>
               {files.map((file, index) => {
-                const fileName = getFileName(file.path);
+                // Use FileName if available, otherwise extract from path
+                const fileName = file.fileName || getFileName(file.path);
                 
                 return (
                   <tr 

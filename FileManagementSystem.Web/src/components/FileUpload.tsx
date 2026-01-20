@@ -3,17 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fileApi } from '../services/api';
 
 interface FileUploadProps {
-  destinationFolder?: string;
+  destinationFolderId?: string;
 }
 
-const FileUpload = ({ destinationFolder }: FileUploadProps) => {
+const FileUpload = ({ destinationFolderId }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      return await fileApi.uploadFile(file, destinationFolder);
+      return await fileApi.uploadFile(file, destinationFolderId);
     },
     onSuccess: () => {
       // Invalidate and refetch files

@@ -29,13 +29,24 @@ public class FilesController : ControllerBase
         [FromQuery] string? searchTerm = null,
         [FromQuery] List<string>? tags = null,
         [FromQuery] bool? isPhoto = null,
-        [FromQuery] Guid? folderId = null,
+        [FromQuery] string? folderId = null,
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
+        // Parse folderId string to Guid if provided
+        Guid? parsedFolderId = null;
+        if (!string.IsNullOrEmpty(folderId) && Guid.TryParse(folderId, out var guid))
+        {
+            parsedFolderId = guid;
+        }
+        else if (!string.IsNullOrEmpty(folderId))
+        {
+            _logger.LogWarning("Invalid folderId format: {FolderId}", folderId);
+        }
+        
         _logger.LogInformation("GetFiles called with searchTerm={SearchTerm}, isPhoto={IsPhoto}, folderId={FolderId}, skip={Skip}, take={Take}",
-            searchTerm, isPhoto, folderId, skip, take);
+            searchTerm, isPhoto, parsedFolderId, skip, take);
         
         try
         {
@@ -43,7 +54,7 @@ public class FilesController : ControllerBase
                 SearchTerm: searchTerm,
                 Tags: tags,
                 IsPhoto: isPhoto,
-                FolderId: folderId,
+                FolderId: parsedFolderId,
                 Skip: skip,
                 Take: take
             );
@@ -156,12 +167,31 @@ public class FilesController : ControllerBase
             foreach (var pathToTry in pathsToTry.Distinct())
             {
                 triedPaths.Add(pathToTry);
-                _logger.LogDebug("Checking path: {Path} (Exists: {Exists})", pathToTry, System.IO.File.Exists(pathToTry));
-                if (System.IO.File.Exists(pathToTry))
+                var exists = System.IO.File.Exists(pathToTry);
+                _logger.LogInformation("Checking path: {Path} | Exists: {Exists}", pathToTry, exists);
+                if (exists)
                 {
                     actualFilePath = pathToTry;
                     _logger.LogInformation("Found file at: {FilePath}", actualFilePath);
                     break;
+                }
+            }
+            
+            // If still not found and path is absolute, try to list the directory to see what files are there
+            if (actualFilePath == null && Path.IsPathRooted(storedPath))
+            {
+                try
+                {
+                    var directory = Path.GetDirectoryName(storedPath);
+                    if (!string.IsNullOrEmpty(directory) && System.IO.Directory.Exists(directory))
+                    {
+                        var filesInDir = System.IO.Directory.GetFiles(directory);
+                        _logger.LogWarning("Directory exists but file not found. Files in directory: {Files}", string.Join(", ", filesInDir.Select(Path.GetFileName)));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not list directory contents");
                 }
             }
 
@@ -206,7 +236,7 @@ public class FilesController : ControllerBase
     [HttpPost("upload")]
     public async Task<ActionResult<UploadFileResult>> UploadFile(
         IFormFile file,
-        [FromForm] string? destinationFolder = null,
+        [FromForm] string? destinationFolderId = null,
         CancellationToken cancellationToken = default)
     {
         if (file == null || file.Length == 0)
@@ -218,8 +248,8 @@ public class FilesController : ControllerBase
         // Save uploaded file to temp location
         var tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
         
-        _logger.LogInformation("File upload started: {FileName}, Size={Size}, Destination={Destination}, TempPath={TempPath}",
-            file.FileName, file.Length, destinationFolder ?? "default", tempPath);
+        _logger.LogInformation("File upload started: {FileName}, Size={Size}, DestinationFolderId={DestinationFolderId}, TempPath={TempPath}",
+            file.FileName, file.Length, destinationFolderId ?? "default", tempPath);
         
         try
         {
@@ -238,7 +268,14 @@ public class FilesController : ControllerBase
             _logger.LogDebug("Temp file created successfully: {TempPath}, Size={Size}", 
                 tempPath, new FileInfo(tempPath).Length);
 
-            var command = new UploadFileCommand(tempPath, destinationFolder);
+            // Parse folder ID if provided
+            Guid? folderId = null;
+            if (!string.IsNullOrEmpty(destinationFolderId) && Guid.TryParse(destinationFolderId, out var parsedFolderId))
+            {
+                folderId = parsedFolderId;
+            }
+
+            var command = new UploadFileCommand(tempPath, folderId);
             var result = await _mediator.Send(command, cancellationToken);
             
             _logger.LogInformation("File upload completed: {FileId}, IsDuplicate={IsDuplicate}",

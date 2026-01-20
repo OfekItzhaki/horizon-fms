@@ -4,8 +4,10 @@ public record FileItemDto
 {
     public Guid Id { get; init; }
     public string Path { get; init; } = string.Empty;
+    public string FileName { get; init; } = string.Empty; // Original filename for display
     public string HashHex { get; init; } = string.Empty;
     public long Size { get; init; }
+    public bool IsCompressed { get; init; }
     public string MimeType { get; init; } = string.Empty;
     public List<string> Tags { get; init; } = new();
     public DateTime CreatedDate { get; init; }

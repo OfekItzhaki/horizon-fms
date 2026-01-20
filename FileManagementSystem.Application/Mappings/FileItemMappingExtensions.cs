@@ -1,3 +1,4 @@
+using System.IO;
 using FileManagementSystem.Domain.Entities;
 using FileManagementSystem.Application.DTOs;
 
@@ -11,8 +12,14 @@ public static class FileItemMappingExtensions
         {
             Id = fileItem.Id,
             Path = fileItem.Path,
+            FileName = !string.IsNullOrEmpty(fileItem.FileName) 
+                ? fileItem.FileName 
+                : (!string.IsNullOrEmpty(fileItem.Path) 
+                    ? Path.GetFileName(fileItem.Path) 
+                    : string.Empty),
             HashHex = !string.IsNullOrEmpty(fileItem.HashHex) ? fileItem.HashHex : Convert.ToHexString(fileItem.Hash),
             Size = fileItem.Size,
+            IsCompressed = fileItem.IsCompressed,
             MimeType = fileItem.MimeType,
             Tags = fileItem.Tags.ToList(),
             CreatedDate = fileItem.CreatedDate,

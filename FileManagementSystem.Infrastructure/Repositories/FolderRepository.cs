@@ -35,12 +35,32 @@ public class FolderRepository : Repository<Folder>, IFolderRepository
         }
         
         var directoryInfo = new DirectoryInfo(path);
+        
+        // Prevent creating folders for drive letters (C:, D:, etc.)
+        // A drive letter path like "C:" or "C:\" should not create a folder
+        if (directoryInfo.Parent == null || 
+            (directoryInfo.Parent.FullName == directoryInfo.Root.FullName && 
+             directoryInfo.Name.Length <= 3 && directoryInfo.Name.EndsWith(":")))
+        {
+            // This is a root drive, don't create a folder for it
+            // Return null or create a special root folder - for now, we'll skip drive letters
+            throw new InvalidOperationException($"Cannot create folder for drive letter: {path}");
+        }
+        
         var parentPath = directoryInfo.Parent?.FullName;
         Folder? parentFolder = null;
         
         if (!string.IsNullOrEmpty(parentPath))
         {
-            parentFolder = await GetOrCreateByPathAsync(parentPath, cancellationToken);
+            try
+            {
+                parentFolder = await GetOrCreateByPathAsync(parentPath, cancellationToken);
+            }
+            catch (InvalidOperationException)
+            {
+                // Parent is a drive letter, skip it and create this folder as root level
+                parentFolder = null;
+            }
         }
         
         folder = new Folder
