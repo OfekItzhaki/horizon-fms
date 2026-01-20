@@ -113,7 +113,9 @@ public class UploadFileCommandHandler : IRequestHandler<UploadFileCommand, Uploa
         }
         
         // Build destination path using the target folder
-        var fileName = Path.GetFileName(normalizedSourcePath);
+        // Use the original filename from the request (not from temp path which has GUID)
+        var originalFileName = request.OriginalFileName;
+        var fileName = Path.GetFileName(originalFileName); // Get just the filename part
         destinationPath = Path.Combine(targetFolder.Path, fileName);
         
         // Ensure the directory exists
@@ -121,9 +123,6 @@ public class UploadFileCommandHandler : IRequestHandler<UploadFileCommand, Uploa
         
         // Always copy file to managed storage location (now compresses automatically)
         var compressedPath = await _storageService.SaveFileAsync(normalizedSourcePath, destinationPath, cancellationToken);
-        
-        // Get original filename from source file (used for display and MIME type)
-        var originalFileName = Path.GetFileName(normalizedSourcePath);
         var displayPath = destinationPath; // Store storage path (without .gz) for file location
         
         // Use the target folder we already determined

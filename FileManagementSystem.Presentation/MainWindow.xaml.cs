@@ -191,7 +191,8 @@ public partial class MainWindow : Window
         
         try
         {
-            var command = new UploadFileCommand(dialog.FileName);
+            var originalFileName = System.IO.Path.GetFileName(dialog.FileName);
+            var command = new UploadFileCommand(dialog.FileName, originalFileName);
             var result = await _mediator.Send(command);
             
             MessageBox.Show($"File uploaded successfully: {result.FilePath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -396,7 +397,8 @@ public partial class MainWindow : Window
                 {
                     try
                     {
-                        var command = new UploadFileCommand(file);
+                        var originalFileName = System.IO.Path.GetFileName(file);
+                        var command = new UploadFileCommand(file, originalFileName);
                         await _mediator.Send(command);
                     }
                     catch (Exception ex)

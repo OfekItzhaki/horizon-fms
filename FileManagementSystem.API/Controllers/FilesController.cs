@@ -281,7 +281,7 @@ public class FilesController : ControllerBase
                 folderId = parsedFolderId;
             }
 
-            var command = new UploadFileCommand(tempPath, folderId);
+            var command = new UploadFileCommand(tempPath, file.FileName, folderId);
             var result = await _mediator.Send(command, cancellationToken);
             
             _logger.LogInformation("File upload completed: {FileId}, IsDuplicate={IsDuplicate}",

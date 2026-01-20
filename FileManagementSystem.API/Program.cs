@@ -243,27 +243,50 @@ using (var scope = app.Services.CreateScope())
                     }
                     
                     // Populate empty FileName values from Path
-                    var populateCommand = connection.CreateCommand();
-                    // Extract filename from Path - handles both / and \ separators
-                    populateCommand.CommandText = @"
-                        UPDATE FileItems 
-                        SET FileName = CASE 
-                            WHEN Path IS NOT NULL AND Path != '' 
-                            THEN CASE
-                                WHEN instr(reverse(Path), '/') > 0 
-                                THEN substr(Path, length(Path) - instr(reverse(Path), '/') + 2)
-                                WHEN instr(reverse(Path), '\') > 0 
-                                THEN substr(Path, length(Path) - instr(reverse(Path), '\') + 2)
-                                ELSE Path
-                            END
-                            ELSE ''
-                        END
-                        WHERE FileName IS NULL OR FileName = ''";
-                    var populatedCount = await populateCommand.ExecuteNonQueryAsync();
+                    // SQLite doesn't have reverse(), so we'll use C# to extract filenames
+                    var selectCommand = connection.CreateCommand();
+                    selectCommand.CommandText = @"
+                        SELECT Id, Path 
+                        FROM FileItems 
+                        WHERE (FileName IS NULL OR FileName = '') AND Path IS NOT NULL AND Path != ''";
                     
-                    if (populatedCount > 0)
+                    using (var reader = await selectCommand.ExecuteReaderAsync())
                     {
-                        Log.Logger.Information("Populated FileName for {Count} files from Path", populatedCount);
+                        var updateCommands = new List<(Guid Id, string FileName)>();
+                        
+                        while (await reader.ReadAsync())
+                        {
+                            var fileId = reader.GetGuid(0);
+                            var path = reader.GetString(1);
+                            
+                            // Extract filename from path (handles both / and \)
+                            var fileName = Path.GetFileName(path);
+                            if (!string.IsNullOrEmpty(fileName))
+                            {
+                                updateCommands.Add((fileId, fileName));
+                            }
+                        }
+                        
+                        // Update each file with its extracted filename
+                        foreach (var (id, fileName) in updateCommands)
+                        {
+                            var updateCmd = connection.CreateCommand();
+                            updateCmd.CommandText = "UPDATE FileItems SET FileName = @fileName WHERE Id = @id";
+                            var param1 = updateCmd.CreateParameter();
+                            param1.ParameterName = "@fileName";
+                            param1.Value = fileName;
+                            updateCmd.Parameters.Add(param1);
+                            var param2 = updateCmd.CreateParameter();
+                            param2.ParameterName = "@id";
+                            param2.Value = id;
+                            updateCmd.Parameters.Add(param2);
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+                        
+                        if (updateCommands.Count > 0)
+                        {
+                            Log.Logger.Information("Populated FileName for {Count} files from Path using C# extraction", updateCommands.Count);
+                        }
                     }
                 }
                 catch (Exception ex)
