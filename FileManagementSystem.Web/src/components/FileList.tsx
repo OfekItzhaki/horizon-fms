@@ -79,18 +79,15 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
   return (
     <div>
       <h2>Files ({totalCount})</h2>
-      {files.length === 0 ? (
-        <p>No files found</p>
-      ) : (
-        <div style={{ overflowX: 'auto', marginTop: '1rem' }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            border: '1px solid #ddd',
-            tableLayout: 'fixed',
-            backgroundColor: '#fff',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
+      <div style={{ overflowX: 'auto', marginTop: '1rem', minHeight: '260px' }}>
+        <table style={{ 
+          width: '100%', 
+          borderCollapse: 'collapse', 
+          border: '1px solid #ddd',
+          tableLayout: 'fixed',
+          backgroundColor: '#fff',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
             <colgroup>
               <col style={{ width: '30%' }} />
               <col style={{ width: '10%' }} />
@@ -154,6 +151,18 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
               </tr>
             </thead>
             <tbody>
+              {files.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ 
+                    padding: '1rem',
+                    textAlign: 'center',
+                    color: '#666',
+                    fontSize: '0.95rem'
+                  }}>
+                    No files found
+                  </td>
+                </tr>
+              )}
               {files.map((file, index) => {
                 // Use FileName if available, otherwise extract from path
                 const fileName = file.fileName || getFileName(file.path);
@@ -311,7 +320,6 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
             </tbody>
           </table>
         </div>
-      )}
     </div>
   );
 };
