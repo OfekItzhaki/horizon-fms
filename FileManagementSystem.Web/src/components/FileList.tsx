@@ -92,12 +92,12 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           }}>
             <colgroup>
-              <col style={{ width: 'auto', minWidth: '200px' }} />
-              <col style={{ width: '100px' }} />
-              <col style={{ width: '120px' }} />
-              <col style={{ width: '150px' }} />
-              <col style={{ width: '120px' }} />
-              <col style={{ width: '180px' }} />
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
             </colgroup>
             <thead>
               <tr style={{ 
@@ -179,8 +179,9 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      fontSize: '0.9rem'
-                    }} title={file.path}>
+                      fontSize: '0.9rem',
+                      maxWidth: 0
+                    }} title={fileName}>
                       {fileName}
                     </td>
                     <td style={{ 
