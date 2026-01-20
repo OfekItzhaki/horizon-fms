@@ -223,30 +223,52 @@ using (var scope = app.Services.CreateScope())
                     addFileNameCommand.CommandText = "ALTER TABLE FileItems ADD COLUMN FileName TEXT";
                     await addFileNameCommand.ExecuteNonQueryAsync();
                     Log.Logger.Information("Added FileName column to FileItems table");
+                }
+                
+                // Populate FileName for existing files from Path using raw SQL to avoid NULL reading issues
+                // Run this on every startup to keep data consistent
+                try
+                {
+                    var updateCommand = connection.CreateCommand();
+                    // Update NULL FileName values - set to empty string to allow EF Core to read them
+                    updateCommand.CommandText = @"
+                        UPDATE FileItems 
+                        SET FileName = '' 
+                        WHERE FileName IS NULL";
+                    var nullCount = await updateCommand.ExecuteNonQueryAsync();
                     
-                    // Populate FileName for existing files from Path using raw SQL to avoid NULL reading issues
-                    try
+                    if (nullCount > 0)
                     {
-                        var updateCommand = connection.CreateCommand();
-                        // Update NULL FileName values - set to empty string to allow EF Core to read them
-                        updateCommand.CommandText = @"
-                            UPDATE FileItems 
-                            SET FileName = '' 
-                            WHERE FileName IS NULL";
-                        var nullCount = await updateCommand.ExecuteNonQueryAsync();
-                        
-                        if (nullCount > 0)
-                        {
-                            Log.Logger.Information("Set {Count} NULL FileName values to empty string", nullCount);
-                            
-                            // Note: We'll populate FileName from Path in the mapping layer
-                            // This ensures proper path handling for both / and \ separators
-                        }
+                        Log.Logger.Information("Set {Count} NULL FileName values to empty string", nullCount);
                     }
-                    catch (Exception ex)
+                    
+                    // Populate empty FileName values from Path
+                    var populateCommand = connection.CreateCommand();
+                    // Extract filename from Path - handles both / and \ separators
+                    populateCommand.CommandText = @"
+                        UPDATE FileItems 
+                        SET FileName = CASE 
+                            WHEN Path IS NOT NULL AND Path != '' 
+                            THEN CASE
+                                WHEN instr(reverse(Path), '/') > 0 
+                                THEN substr(Path, length(Path) - instr(reverse(Path), '/') + 2)
+                                WHEN instr(reverse(Path), '\') > 0 
+                                THEN substr(Path, length(Path) - instr(reverse(Path), '\') + 2)
+                                ELSE Path
+                            END
+                            ELSE ''
+                        END
+                        WHERE FileName IS NULL OR FileName = ''";
+                    var populatedCount = await populateCommand.ExecuteNonQueryAsync();
+                    
+                    if (populatedCount > 0)
                     {
-                        Log.Logger.Warning(ex, "Error updating NULL FileName values");
+                        Log.Logger.Information("Populated FileName for {Count} files from Path", populatedCount);
                     }
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Warning(ex, "Error updating FileName values");
                 }
             }
             finally

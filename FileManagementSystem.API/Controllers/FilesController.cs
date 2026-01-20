@@ -213,10 +213,16 @@ public class FilesController : ControllerBase
             var isActuallyCompressed = actualFilePath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase);
             var fileData = await storageService.ReadFileAsync(actualFilePath, isActuallyCompressed, cancellationToken);
             
-            _logger.LogDebug("File read for download: ID={FileId}, OriginalFileName={FileName}, WasCompressed={WasCompressed}, Size={Size}", 
-                id, fileData.OriginalFileName, fileData.WasCompressed, fileData.Content.Length);
+            // Use the original filename from database (FileName property) if available
+            // This ensures the downloaded file has the correct original name the user uploaded
+            var downloadFileName = !string.IsNullOrEmpty(file.FileName) 
+                ? file.FileName 
+                : fileData.OriginalFileName;
             
-            return File(fileData.Content, file.MimeType, fileData.OriginalFileName);
+            _logger.LogDebug("File read for download: ID={FileId}, DatabaseFileName={DatabaseFileName}, ExtractedFileName={ExtractedFileName}, WasCompressed={WasCompressed}, Size={Size}", 
+                id, file.FileName, fileData.OriginalFileName, fileData.WasCompressed, fileData.Content.Length);
+            
+            return File(fileData.Content, file.MimeType, downloadFileName);
         }
         catch (FileNotFoundException ex)
         {
