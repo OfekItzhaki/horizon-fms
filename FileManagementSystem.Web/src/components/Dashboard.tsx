@@ -48,9 +48,28 @@ const Dashboard = () => {
   });
 
   return (
-    <div style={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
-      <header style={{ padding: '1rem', borderBottom: '1px solid #ccc', background: '#f5f5f5' }}>
-        <h1>File Management System</h1>
+    <div style={{ 
+      display: 'flex', 
+      height: '100vh', 
+      flexDirection: 'column',
+      backgroundColor: '#f8fafc',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+    }}>
+      <header style={{ 
+        padding: '1.5rem 2rem', 
+        borderBottom: '1px solid #e2e8f0', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+      }}>
+        <h1 style={{ 
+          margin: '0 0 1rem 0', 
+          fontSize: '1.75rem', 
+          fontWeight: '700',
+          color: '#ffffff',
+          letterSpacing: '-0.025em'
+        }}>
+          File Management System
+        </h1>
         <SearchBar
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -62,7 +81,14 @@ const Dashboard = () => {
       </header>
       
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <aside style={{ width: '300px', borderRight: '1px solid #ccc', overflow: 'auto', padding: '1rem' }}>
+        <aside style={{ 
+          width: '320px', 
+          borderRight: '1px solid #e2e8f0', 
+          overflow: 'auto', 
+          padding: '1.5rem',
+          backgroundColor: '#ffffff',
+          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.04)'
+        }}>
           <FolderTree
             folders={foldersData?.folders || []}
             onFolderSelect={setSelectedFolderId}
@@ -70,7 +96,12 @@ const Dashboard = () => {
           />
         </aside>
         
-        <main style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+        <main style={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          padding: '2rem',
+          backgroundColor: '#f8fafc'
+        }}>
           <FileUpload destinationFolderId={selectedFolderId} />
           <FileList
             files={filteredFiles}

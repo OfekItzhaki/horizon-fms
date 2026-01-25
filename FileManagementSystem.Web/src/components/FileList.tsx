@@ -78,15 +78,29 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
 
   return (
     <div>
-      <h2>Files ({totalCount})</h2>
-      <div style={{ overflowX: 'auto', marginTop: '1rem', minHeight: '260px' }}>
+      <h2 style={{
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        color: '#1e293b',
+        margin: '0 0 1.5rem 0',
+        letterSpacing: '-0.025em'
+      }}>
+        Files <span style={{ color: '#64748b', fontWeight: '500', fontSize: '1.1rem' }}>({totalCount})</span>
+      </h2>
+      <div style={{ 
+        overflowX: 'auto', 
+        marginTop: '1rem', 
+        minHeight: '260px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        backgroundColor: '#ffffff',
+        overflow: 'hidden'
+      }}>
         <table style={{ 
           width: '100%', 
           borderCollapse: 'collapse', 
-          border: '1px solid #ddd',
           tableLayout: 'fixed',
-          backgroundColor: '#fff',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          backgroundColor: '#fff'
         }}>
             <colgroup>
               <col style={{ width: '30%' }} />
@@ -98,55 +112,62 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
             </colgroup>
             <thead>
               <tr style={{ 
-                borderBottom: '2px solid #ccc', 
-                background: 'linear-gradient(to bottom, #f8f9fa, #e9ecef)'
+                borderBottom: '2px solid #e2e8f0', 
+                background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)'
               }}>
                 <th style={{ 
                   textAlign: 'left', 
-                  padding: '1rem 0.75rem', 
-                  borderRight: '1px solid #ddd',
+                  padding: '1.25rem 1rem', 
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Name</th>
                 <th style={{ 
                   textAlign: 'right', 
-                  padding: '1rem 0.75rem', 
-                  borderRight: '1px solid #ddd',
+                  padding: '1.25rem 1rem', 
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Size</th>
                 <th style={{ 
                   textAlign: 'left', 
-                  padding: '1rem 0.75rem', 
-                  borderRight: '1px solid #ddd',
+                  padding: '1.25rem 1rem', 
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Type</th>
                 <th style={{ 
                   textAlign: 'left', 
-                  padding: '1rem 0.75rem', 
-                  borderRight: '1px solid #ddd',
+                  padding: '1.25rem 1rem', 
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Tags</th>
                 <th style={{ 
                   textAlign: 'left', 
-                  padding: '1rem 0.75rem', 
-                  borderRight: '1px solid #ddd',
+                  padding: '1.25rem 1rem', 
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Date</th>
                 <th style={{ 
                   textAlign: 'center', 
-                  padding: '1rem 0.75rem',
+                  padding: '1.25rem 1rem',
                   fontWeight: '600',
-                  fontSize: '0.9rem',
-                  color: '#333'
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }}>Actions</th>
               </tr>
             </thead>
@@ -154,10 +175,11 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
               {files.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ 
-                    padding: '1rem',
+                    padding: '3rem 1rem',
                     textAlign: 'center',
-                    color: '#666',
-                    fontSize: '0.95rem'
+                    color: '#94a3b8',
+                    fontSize: '1rem',
+                    fontWeight: '500'
                   }}>
                     No files found
                   </td>
@@ -171,73 +193,75 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
                   <tr 
                     key={file.id} 
                     style={{ 
-                      borderBottom: '1px solid #e0e0e0',
-                      backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9',
-                      transition: 'background-color 0.2s'
+                      borderBottom: '1px solid #f1f5f9',
+                      backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f0f7ff';
+                      e.currentTarget.style.backgroundColor = '#f0f9ff';
+                      e.currentTarget.style.transform = 'scale(1.001)';
+                      e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f9f9f9';
+                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <td style={{ 
-                      padding: '0.875rem 0.75rem', 
-                      borderRight: '1px solid #e0e0e0',
+                      padding: '1rem', 
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      fontSize: '0.9rem',
+                      fontSize: '0.95rem',
+                      color: '#1e293b',
+                      fontWeight: '500',
                       maxWidth: 0
                     }} title={fileName}>
                       {fileName}
                     </td>
                     <td style={{ 
                       textAlign: 'right', 
-                      padding: '0.875rem 0.75rem', 
-                      borderRight: '1px solid #e0e0e0',
+                      padding: '1rem', 
                       whiteSpace: 'nowrap',
                       fontSize: '0.9rem',
-                      color: '#666'
+                      color: '#64748b',
+                      fontWeight: '500'
                     }}>
                       {formatSize(file.size)}
                     </td>
                     <td style={{ 
-                      padding: '0.875rem 0.75rem', 
-                      borderRight: '1px solid #e0e0e0',
+                      padding: '1rem', 
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      fontSize: '0.85rem',
-                      color: '#666'
+                      fontSize: '0.875rem',
+                      color: '#64748b'
                     }} title={file.mimeType}>
                       {file.mimeType || '-'}
                     </td>
                     <td style={{ 
-                      padding: '0.875rem 0.75rem', 
-                      borderRight: '1px solid #e0e0e0',
+                      padding: '1rem', 
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      fontSize: '0.85rem',
-                      color: '#666'
+                      fontSize: '0.875rem',
+                      color: '#64748b'
                     }} title={file.tags.join(', ') || ''}>
                       {file.tags.length > 0 ? file.tags.join(', ') : '-'}
                     </td>
                     <td style={{ 
-                      padding: '0.875rem 0.75rem', 
-                      borderRight: '1px solid #e0e0e0',
+                      padding: '1rem', 
                       whiteSpace: 'nowrap',
                       fontSize: '0.9rem',
-                      color: '#666'
+                      color: '#64748b',
+                      fontWeight: '500'
                     }}>
                       {new Date(file.createdDate).toLocaleDateString()}
                     </td>
                     <td style={{ 
-                      padding: '0.875rem', 
-                      textAlign: 'center',
-                      borderRight: 'none'
+                      padding: '1rem', 
+                      textAlign: 'center'
                     }}>
                       <div style={{ 
                         display: 'flex', 
@@ -249,28 +273,26 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
                         <button
                           onClick={() => handleOpen(file)}
                           style={{
-                            padding: '0.5rem 1rem',
-                            borderRadius: '6px',
+                            padding: '0.625rem 1.25rem',
+                            borderRadius: '8px',
                             border: 'none',
-                            background: '#007bff',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             color: '#fff',
                             cursor: 'pointer',
                             fontSize: '0.875rem',
-                            fontWeight: '500',
+                            fontWeight: '600',
                             width: '100%',
                             maxWidth: '120px',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 1px 3px rgba(0,123,255,0.3)'
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#0056b3';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0,123,255,0.4)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(102, 126, 234, 0.4)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#007bff';
                             e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,123,255,0.3)';
+                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(102, 126, 234, 0.3)';
                           }}
                           title="Open file"
                         >
@@ -280,32 +302,30 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
                           onClick={() => handleDelete(file.id, fileName)}
                           disabled={deleteMutation.isPending}
                           style={{
-                            padding: '0.5rem 1rem',
-                            borderRadius: '6px',
+                            padding: '0.625rem 1.25rem',
+                            borderRadius: '8px',
                             border: 'none',
-                            background: '#dc3545',
+                            background: deleteMutation.isPending ? '#cbd5e1' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                             color: '#fff',
                             cursor: deleteMutation.isPending ? 'not-allowed' : 'pointer',
                             fontSize: '0.875rem',
-                            fontWeight: '500',
+                            fontWeight: '600',
                             width: '100%',
                             maxWidth: '120px',
-                            opacity: deleteMutation.isPending ? 0.6 : 1,
-                            transition: 'all 0.2s',
-                            boxShadow: '0 1px 3px rgba(220,53,69,0.3)'
+                            opacity: deleteMutation.isPending ? 0.7 : 1,
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: deleteMutation.isPending ? 'none' : '0 2px 4px rgba(239, 68, 68, 0.3)'
                           }}
                           onMouseEnter={(e) => {
                             if (!deleteMutation.isPending) {
-                              e.currentTarget.style.background = '#c82333';
-                              e.currentTarget.style.transform = 'translateY(-1px)';
-                              e.currentTarget.style.boxShadow = '0 2px 5px rgba(220,53,69,0.4)';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(239, 68, 68, 0.4)';
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!deleteMutation.isPending) {
-                              e.currentTarget.style.background = '#dc3545';
                               e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(220,53,69,0.3)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(239, 68, 68, 0.3)';
                             }
                           }}
                           title="Delete file"
