@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, memo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fileApi } from '../services/api';
 
@@ -6,7 +6,7 @@ interface FileUploadProps {
   destinationFolderId?: string;
 }
 
-const FileUpload = ({ destinationFolderId }: FileUploadProps) => {
+const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const queryClient = useQueryClient();
@@ -179,6 +179,8 @@ const FileUpload = ({ destinationFolderId }: FileUploadProps) => {
       )}
     </div>
   );
-};
+});
+
+FileUpload.displayName = 'FileUpload';
 
 export default FileUpload;

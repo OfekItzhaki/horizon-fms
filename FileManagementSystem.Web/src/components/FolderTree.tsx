@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { folderApi } from '../services/api';
 import type { FolderDto } from '../types';
@@ -9,7 +9,7 @@ interface FolderTreeProps {
   selectedFolderId?: string;
 }
 
-const FolderTree = ({ folders, onFolderSelect, selectedFolderId }: FolderTreeProps) => {
+const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTreeProps) => {
   const queryClient = useQueryClient();
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -505,6 +505,8 @@ const FolderTree = ({ folders, onFolderSelect, selectedFolderId }: FolderTreePro
       {folders.map((folder) => renderFolder(folder))}
     </div>
   );
-};
+});
+
+FolderTree.displayName = 'FolderTree';
 
 export default FolderTree;

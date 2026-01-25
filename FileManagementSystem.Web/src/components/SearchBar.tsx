@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import './SearchBar.css';
 
 interface SearchBarProps {
@@ -10,7 +10,7 @@ interface SearchBarProps {
   onDocumentOnlyChange: (value: boolean) => void;
 }
 
-const SearchBar = ({ 
+const SearchBar = memo(({ 
   searchTerm, 
   onSearchChange, 
   isPhotoOnly, 
@@ -20,6 +20,7 @@ const SearchBar = ({
 }: SearchBarProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   useEffect(() => {
     const handleResize = () => {
@@ -29,15 +30,31 @@ const SearchBar = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Debounce local search term and pass to parent
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(localSearchTerm);
+      onSearchChange(localSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearchTerm, onSearchChange]);
+
   // Sync local state with prop when it changes externally (e.g., from Clear button)
   useEffect(() => {
-    setLocalSearchTerm(searchTerm);
+    if (searchTerm !== localSearchTerm) {
+      setLocalSearchTerm(searchTerm);
+    }
   }, [searchTerm]);
 
-  const handleInputChange = (value: string) => {
+  const handleInputChange = useCallback((value: string) => {
     setLocalSearchTerm(value);
-    onSearchChange(value);
-  };
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setLocalSearchTerm('');
+    onSearchChange('');
+  }, [onSearchChange]);
 
   return (
     <div style={{ 
@@ -148,7 +165,7 @@ const SearchBar = ({
         position: 'relative',
         zIndex: 10,
         justifyContent: 'flex-end',
-        marginLeft: '0.25rem'
+        marginLeft: '0'
       }}>
         <label style={{ 
           display: 'flex', 
@@ -222,6 +239,17 @@ const SearchBar = ({
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if filter props change, not when searchTerm changes
+  return (
+    prevProps.isPhotoOnly === nextProps.isPhotoOnly &&
+    prevProps.isDocumentOnly === nextProps.isDocumentOnly &&
+    prevProps.onSearchChange === nextProps.onSearchChange &&
+    prevProps.onPhotoOnlyChange === nextProps.onPhotoOnlyChange &&
+    prevProps.onDocumentOnlyChange === nextProps.onDocumentOnlyChange
+  );
+});
+
+SearchBar.displayName = 'SearchBar';
 
 export default SearchBar;

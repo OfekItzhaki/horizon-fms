@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fileApi, folderApi } from '../services/api';
 import FileList from './FileList';
@@ -90,6 +90,23 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Stable callbacks to prevent unnecessary re-renders
+  const handleSearchChange = useCallback((term: string) => {
+    setSearchTerm(term);
+  }, []);
+
+  const handlePhotoOnlyChange = useCallback((value: boolean) => {
+    setIsPhotoOnly(value);
+  }, []);
+
+  const handleDocumentOnlyChange = useCallback((value: boolean) => {
+    setIsDocumentOnly(value);
+  }, []);
+
+  const handleFolderSelect = useCallback((folderId: string | undefined) => {
+    setSelectedFolderId(folderId);
+  }, []);
+
   const { data: filesData, isLoading: filesLoading, isFetching: filesFetching } = useQuery({
     queryKey: ['files', debouncedSearchTerm, selectedFolderId, isPhotoOnly],
     queryFn: () => fileApi.getFiles({
@@ -100,6 +117,7 @@ const Dashboard = () => {
     staleTime: 30000, // Consider data fresh for 30 seconds
     keepPreviousData: true, // Keep previous data while fetching new data
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    placeholderData: (previousData) => previousData, // Keep previous data during transitions
   });
 
   // Filter documents on frontend (common document mime types)
@@ -138,18 +156,18 @@ const Dashboard = () => {
     }}>
       <DashboardHeader
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         isPhotoOnly={isPhotoOnly}
-        onPhotoOnlyChange={setIsPhotoOnly}
+        onPhotoOnlyChange={handlePhotoOnlyChange}
         isDocumentOnly={isDocumentOnly}
-        onDocumentOnlyChange={setIsDocumentOnly}
+        onDocumentOnlyChange={handleDocumentOnlyChange}
       />
       
       <div className="dashboard-layout">
         <aside className="dashboard-sidebar">
           <FolderTree
             folders={foldersData?.folders || []}
-            onFolderSelect={setSelectedFolderId}
+            onFolderSelect={handleFolderSelect}
             selectedFolderId={selectedFolderId}
           />
         </aside>

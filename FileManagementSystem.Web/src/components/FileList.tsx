@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { memo } from 'react';
 import { fileApi } from '../services/api';
 import type { FileItemDto } from '../types';
 
@@ -8,7 +9,7 @@ interface FileListProps {
   totalCount: number;
 }
 
-const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
+const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -349,6 +350,8 @@ const FileList = ({ files, isLoading, totalCount }: FileListProps) => {
         </div>
     </div>
   );
-};
+});
+
+FileList.displayName = 'FileList';
 
 export default FileList;
