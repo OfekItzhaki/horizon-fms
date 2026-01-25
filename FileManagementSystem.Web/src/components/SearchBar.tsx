@@ -90,7 +90,7 @@ const SearchBar = ({
         position: 'relative',
         zIndex: 10,
         justifyContent: 'flex-end',
-        marginLeft: '0.5rem'
+        marginLeft: '0.25rem'
       }}>
         <label style={{ 
           display: 'flex', 

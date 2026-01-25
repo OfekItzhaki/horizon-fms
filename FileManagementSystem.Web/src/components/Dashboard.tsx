@@ -70,10 +70,12 @@ const Dashboard = () => {
         <div className="dashboard-header-content">
         <h1 style={{ 
           margin: '0 0 1rem 0', 
-          fontSize: '1.75rem', 
-          fontWeight: '700',
+          fontSize: '2rem', 
+          fontWeight: '800',
           color: '#ffffff',
-          letterSpacing: '-0.025em'
+          letterSpacing: '-0.03em',
+          textShadow: '0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
         }}>
           File Management System
         </h1>

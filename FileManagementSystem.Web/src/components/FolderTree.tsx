@@ -251,7 +251,7 @@ const FolderTree = ({ folders, onFolderSelect, selectedFolderId }: FolderTreePro
                 )}
               </span>
               {/* Always show buttons - they're small and useful */}
-              <div style={{ display: 'flex', gap: '0.375rem', opacity: isHovered || isMobile ? 1 : 0.3, transition: 'opacity 0.2s' }}>
+              <div style={{ display: 'flex', gap: '0.375rem', opacity: isHovered || isMobile ? 1 : 0.8, transition: 'opacity 0.2s' }}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
