@@ -31,7 +31,7 @@ const SearchBar = ({
   return (
     <div style={{ 
       display: 'flex', 
-      gap: '1rem', 
+      gap: '0', 
       alignItems: 'center', 
       flexWrap: 'nowrap',
       flexDirection: 'row',
@@ -89,7 +89,8 @@ const SearchBar = ({
         minWidth: 'fit-content',
         position: 'relative',
         zIndex: 10,
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        marginLeft: '0.5rem'
       }}>
         <label style={{ 
           display: 'flex', 
