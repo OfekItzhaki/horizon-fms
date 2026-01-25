@@ -65,7 +65,7 @@ const SearchBar = ({
             onChange={(e) => handleInputChange(e.target.value)}
             style={{
               padding: '0.75rem 1rem 0.75rem 2.5rem',
-              paddingRight: localSearchTerm ? '2.5rem' : '1rem',
+              paddingRight: localSearchTerm ? '2.75rem' : '1rem',
               borderRadius: '8px',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               background: 'rgba(255, 255, 255, 0.15)',
@@ -98,7 +98,10 @@ const SearchBar = ({
           }}>🔍</span>
           {localSearchTerm && (
             <button
-              onClick={() => handleInputChange('')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleInputChange('');
+              }}
               style={{
                 position: 'absolute',
                 right: '0.5rem',
@@ -108,15 +111,17 @@ const SearchBar = ({
                 border: 'none',
                 color: 'rgba(255, 255, 255, 0.7)',
                 cursor: 'pointer',
-                fontSize: '1.1rem',
+                fontSize: '1rem',
                 padding: '0.25rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '4px',
                 transition: 'all 0.2s',
-                width: '24px',
-                height: '24px'
+                width: '20px',
+                height: '20px',
+                lineHeight: '1',
+                zIndex: 1
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -128,7 +133,7 @@ const SearchBar = ({
               }}
               title="Clear search"
             >
-              ✕
+              ×
             </button>
           )}
         </div>
