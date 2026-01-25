@@ -174,7 +174,9 @@ const SearchBar = ({
             cursor: 'pointer',
             fontSize: '0.9rem',
             fontWeight: '500',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            marginLeft: '0.25rem',
+            flexShrink: 0
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fileApi, folderApi } from '../services/api';
 import FileList from './FileList';
@@ -6,6 +6,49 @@ import FolderTree from './FolderTree';
 import SearchBar from './SearchBar';
 import FileUpload from './FileUpload';
 import './Dashboard.css';
+
+// Memoized header component to prevent re-renders when only search results change
+const DashboardHeader = memo(({ 
+  searchTerm, 
+  onSearchChange, 
+  isPhotoOnly, 
+  onPhotoOnlyChange,
+  isDocumentOnly,
+  onDocumentOnlyChange 
+}: {
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  isPhotoOnly: boolean;
+  onPhotoOnlyChange: (value: boolean) => void;
+  isDocumentOnly: boolean;
+  onDocumentOnlyChange: (value: boolean) => void;
+}) => (
+  <header className="dashboard-header">
+    <div className="dashboard-header-overlay"></div>
+    <div className="dashboard-header-content">
+      <h1 style={{ 
+        margin: '0 0 1rem 0', 
+        fontSize: '2rem', 
+        fontWeight: '800',
+        color: '#ffffff',
+        letterSpacing: '-0.03em',
+        textShadow: '0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      }}>
+        File Management System
+      </h1>
+      <SearchBar
+        searchTerm={searchTerm}
+        onSearchChange={onSearchChange}
+        isPhotoOnly={isPhotoOnly}
+        onPhotoOnlyChange={onPhotoOnlyChange}
+        isDocumentOnly={isDocumentOnly}
+        onDocumentOnlyChange={onDocumentOnlyChange}
+      />
+    </div>
+  </header>
+));
+DashboardHeader.displayName = 'DashboardHeader';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,30 +121,14 @@ const Dashboard = () => {
       backgroundColor: '#f8fafc',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     }}>
-      <header className="dashboard-header">
-        <div className="dashboard-header-overlay"></div>
-        <div className="dashboard-header-content">
-        <h1 style={{ 
-          margin: '0 0 1rem 0', 
-          fontSize: '2rem', 
-          fontWeight: '800',
-          color: '#ffffff',
-          letterSpacing: '-0.03em',
-          textShadow: '0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3)',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-        }}>
-          File Management System
-        </h1>
-        <SearchBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          isPhotoOnly={isPhotoOnly}
-          onPhotoOnlyChange={setIsPhotoOnly}
-          isDocumentOnly={isDocumentOnly}
-          onDocumentOnlyChange={setIsDocumentOnly}
-        />
-        </div>
-      </header>
+      <DashboardHeader
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        isPhotoOnly={isPhotoOnly}
+        onPhotoOnlyChange={setIsPhotoOnly}
+        isDocumentOnly={isDocumentOnly}
+        onDocumentOnlyChange={setIsDocumentOnly}
+      />
       
       <div className="dashboard-layout">
         <aside className="dashboard-sidebar">
