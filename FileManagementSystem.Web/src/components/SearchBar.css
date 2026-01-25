@@ -1,18 +1,24 @@
-/* Desktop: prevent wrapping */
+/* Desktop: prevent wrapping and overlap */
 .search-bar-container,
 div[style*="flexWrap"] {
   flex-wrap: nowrap !important;
 }
 
 .search-bar-container > div:first-child {
-  flex: 0 1 350px !important;
-  max-width: 350px !important;
+  flex: 0 0 auto !important;
+  width: 280px !important;
+  max-width: 280px !important;
   min-width: 200px;
+  position: relative;
+  z-index: 1;
 }
 
 .search-bar-container > div:nth-child(2) {
   flex-shrink: 0 !important;
   min-width: fit-content;
+  position: relative;
+  z-index: 10;
+  margin-left: 0;
 }
 
 /* Mobile responsive for search bar */
