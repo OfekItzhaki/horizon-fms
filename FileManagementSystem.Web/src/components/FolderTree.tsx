@@ -270,8 +270,8 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
                   </span>
                 )}
               </span>
-              {/* Always show buttons - they're small and useful */}
-              <div style={{ display: 'flex', gap: '0.375rem', opacity: isHovered || isMobile ? 1 : 0.8, transition: 'opacity 0.2s' }}>
+              {/* Show buttons on hover only */}
+              <div style={{ display: 'flex', gap: '0.375rem', opacity: isHovered || isMobile ? 1 : 0, transition: 'opacity 0.2s' }}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -493,7 +493,7 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
       <div
         onClick={() => onFolderSelect(undefined)}
         style={{
-          padding: '0.75rem 1rem',
+          padding: '0.5rem 0.75rem',
           paddingLeft: '1rem',
           cursor: 'pointer',
           background: selectedFolderId === undefined 
@@ -501,15 +501,20 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
             : 'transparent',
           borderRadius: '8px',
           marginBottom: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
           fontWeight: '600',
           fontSize: '0.95rem',
           color: selectedFolderId === undefined ? '#667eea' : '#475569',
           border: selectedFolderId === undefined ? '1px solid rgba(102, 126, 234, 0.2)' : '1px solid transparent',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          minWidth: 0,
+          overflow: 'hidden'
         }}
         onMouseEnter={(e) => {
           if (selectedFolderId !== undefined) {
-            e.currentTarget.style.background = '#f1f5f9';
+            e.currentTarget.style.background = '#f8fafc';
             e.currentTarget.style.color = '#667eea';
           }
         }}
@@ -520,7 +525,15 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
           }
         }}
       >
-        📂 All Files
+        <span style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          📂 All Files
+        </span>
       </div>
       {folders.map((folder) => renderFolder(folder))}
     </div>
