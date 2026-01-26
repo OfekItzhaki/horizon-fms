@@ -141,3 +141,6 @@ mono_crash.*
 # Git
 .gitmessage
 *.orig
+
+# Documentation (not committed)
+CODE_GUIDE.md
