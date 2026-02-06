@@ -65,6 +65,126 @@ This document defines the "Golden Rules" and the architectural standards. It is 
 - **Pre-release Tags**: Use `-alpha`, `-beta`, `-rc` suffixes (e.g., `v2.0.0-beta.1`)
 - **Changelog**: Maintain `CHANGELOG.md` with version history using conventional commit groupings
 
+### Commit Strategy & Best Practices
+- **Atomic Commits**: Each commit should represent a single logical change
+- **Commit Frequency**: Commit after completing each distinct feature, fix, or refactor
+- **When to Commit**:
+  - After completing a phase or major milestone
+  - After fixing a bug or completing a feature
+  - Before switching contexts or starting new work
+  - At natural breakpoints (end of day, before meetings)
+- **Commit Message Format**: Use Conventional Commits
+  ```
+  <type>(<scope>): <subject>
+  
+  <body>
+  
+  <footer>
+  ```
+  - **Types**: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`
+  - **Scope**: Optional, e.g., `mobile`, `backend`, `web`, `auth`
+  - **Examples**:
+    - `feat(mobile): migrate ListsScreen to TanStack Query`
+    - `fix(backend): resolve 401 refresh token race condition`
+    - `chore(deps): upgrade @tanstack/react-query to v5.90.16`
+- **Multi-file Changes**: Group related changes in a single commit with a descriptive scope
+- **Breaking Changes**: Use `BREAKING CHANGE:` in footer or `!` after type/scope
+
+### Merge & Integration Strategy
+- **Primary Branch**: `main` (or `master`) is the production-ready branch
+- **Development Branch**: `develop` for integration of features before release
+- **Merge Methods**:
+  - **Squash Merge**: Default for feature branches → `develop` (keeps history clean)
+  - **Merge Commit**: For `develop` → `main` (preserves release history)
+  - **Rebase**: For keeping feature branches up-to-date with `develop` (use with caution)
+- **Before Merging**:
+  - Ensure all tests pass (CI/CD green)
+  - Resolve all merge conflicts locally
+  - Update branch with latest `develop`: `git pull origin develop --rebase`
+  - Verify TypeScript compilation: `npx tsc --noEmit`
+- **Merge Conflicts**:
+  - Always test after resolving conflicts
+  - Prefer "ours" for formatting conflicts, "theirs" for dependency updates
+  - When in doubt, consult the original PR author
+
+### Push & Pull Policies
+- **Push Frequency**: Push at least once per day when actively working
+- **Before Pushing**:
+  - Run local tests and linters
+  - Verify no sensitive data (API keys, tokens) in commits
+  - Check `.gitignore` is properly configured
+- **Force Push**: ⚠️ **NEVER** force push to `main` or `develop`
+  - Only use `git push --force-with-lease` on personal feature branches
+  - Communicate with team before force-pushing shared branches
+- **Pull Strategy**: Use `git pull --rebase` to avoid unnecessary merge commits
+- **Stashing**: Use `git stash` before pulling if you have uncommitted changes
+
+### Branch Protection & Code Review
+- **Protected Branches**: `main` and `develop` should require:
+  - Pull request reviews (minimum 1 approval)
+  - Passing CI/CD checks
+  - No direct commits allowed
+- **Pull Request Guidelines**:
+  - **Title**: Use conventional commit format
+  - **Description**: Include:
+    - What changed and why
+    - Testing performed
+    - Screenshots for UI changes
+    - Breaking changes (if any)
+  - **Size**: Keep PRs under 400 lines when possible (easier to review)
+  - **Draft PRs**: Use for work-in-progress to get early feedback
+- **Code Review Checklist**:
+  - ✅ Follows architectural pillars and golden rules
+  - ✅ No `any` types or unsafe casts
+  - ✅ Proper error handling with ProblemDetails
+  - ✅ Tests included for new features
+  - ✅ Documentation updated if needed
+
+### Workflow Patterns
+- **Feature Development**:
+  ```bash
+  git checkout develop
+  git pull origin develop
+  git checkout -b feat/my-feature
+  # ... make changes ...
+  git add -A
+  git commit -m "feat(scope): description"
+  git push origin feat/my-feature
+  # Create PR: feat/my-feature → develop
+  ```
+- **Hotfix for Production**:
+  ```bash
+  git checkout main
+  git pull origin main
+  git checkout -b fix/critical-bug
+  # ... fix bug ...
+  git commit -m "fix(scope): description"
+  git push origin fix/critical-bug
+  # Create PR: fix/critical-bug → main (and cherry-pick to develop)
+  ```
+- **Syncing Feature Branch**:
+  ```bash
+  git checkout feat/my-feature
+  git fetch origin
+  git rebase origin/develop
+  # Resolve conflicts if any
+  git push --force-with-lease
+  ```
+
+### Git Hygiene & Maintenance
+- **Clean Up Merged Branches**:
+  ```bash
+  git branch -d feat/my-feature  # Delete local
+  git push origin --delete feat/my-feature  # Delete remote
+  ```
+- **Prune Stale References**: `git fetch --prune` regularly
+- **Avoid Committing**:
+  - `node_modules/`, `dist/`, `build/`
+  - `.env` files (use `.env.example` instead)
+  - IDE-specific files (`.vscode/`, `.idea/`)
+  - Large binary files (use Git LFS if needed)
+- **Commit History**: Never rewrite public history (no `git rebase -i` on pushed commits)
+
 ## 🛡️ Security & Performance
 - **Secrets**: Never commit `.env` files. Use `.env.example` as a template.
 - **CORS**: Strictly define allowed origins; never use `*` in production.
