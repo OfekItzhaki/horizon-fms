@@ -1,39 +1,34 @@
-// Type definitions
-export interface FileItemDto {
-  id: string;
-  path: string;
-  fileName: string; // Original filename for display
-  hashHex: string;
-  size: number;
-  mimeType: string;
-  tags: string[];
-  createdDate: string;
-  isPhoto: boolean;
-  photoDateTaken?: string;
-  cameraMake?: string;
-  cameraModel?: string;
-  latitude?: number;
-  longitude?: number;
-  thumbnailPath?: string;
-  folderId?: string;
-}
+import type {
+  FileItemDto as BaseFileItemDto,
+  FolderDto as BaseFolderDto,
+  SearchFilesResult,
+  GetFoldersResult,
+  CreateFolderRequest,
+  CreateFolderResult,
+  RenameFileRequest,
+  RenameFileResult,
+  RenameFolderRequest,
+  RenameFolderResult,
+  DeleteFolderResult,
+  AddTagsRequest,
+  UploadFileResult
+} from '../services/api-client';
 
-export interface FolderDto {
-  id: string;
-  path: string;
-  name: string;
-  parentFolderId?: string;
-  createdDate: string;
-  fileCount: number;
-  subFolderCount: number;
+export type {
+  BaseFileItemDto as FileItemDto,
+  SearchFilesResult,
+  GetFoldersResult,
+  CreateFolderRequest,
+  CreateFolderResult,
+  RenameFileRequest,
+  RenameFileResult,
+  RenameFolderRequest,
+  RenameFolderResult,
+  DeleteFolderResult,
+  AddTagsRequest,
+  UploadFileResult
+};
+
+export interface FolderDto extends BaseFolderDto {
   subFolders?: FolderDto[];
-}
-
-export interface SearchFilesResult {
-  files: FileItemDto[];
-  totalCount: number;
-}
-
-export interface GetFoldersResult {
-  folders: FolderDto[];
 }

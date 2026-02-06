@@ -1,0 +1,59 @@
+{
+  "runtime": "Net80",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "json": "swagger.json",
+      "url": null,
+      "output": null,
+      "newLineBehavior": "Auto"
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "{controller}Client",
+      "moduleName": "",
+      "namespace": "",
+      "typeScriptVersion": 5.0,
+      "template": "Fetch",
+      "promiseType": "Promise",
+      "httpClass": "HttpClient",
+      "useSingletonFreeProxy": false,
+      "generateClientClasses": true,
+      "generateClientInterfaces": true,
+      "generateOptionalParameters": true,
+      "exportTypes": true,
+      "wrapDtoExceptions": false,
+      "exceptionClass": "ApiException",
+      "clientBaseClass": null,
+      "wrapResponses": false,
+      "wrapResponseMethods": [],
+      "generateResponseClasses": true,
+      "responseClass": "SwaggerResponse",
+      "protectedMethods": [],
+      "configurationClass": null,
+      "useTransformOptionsMethod": false,
+      "useTransformResultMethod": false,
+      "generateDtoTypes": true,
+      "operationGenerationMode": "MultipleClientsFromOperationId",
+      "markOptionalProperties": true,
+      "generateCloneMethod": false,
+      "typeStyle": "Interface",
+      "dateTimeType": "string",
+      "classTypes": [],
+      "extendedClasses": [],
+      "extensionCode": null,
+      "generateDefaultValues": true,
+      "excludeTypeNames": [],
+      "excludeParameterNames": [],
+      "handleReferences": false,
+      "generateConstructorInterface": true,
+      "convertConstructorInterfaceData": false,
+      "importRequiredTypes": true,
+      "useGetBaseUrlMethod": false,
+      "baseUrlTokenName": "API_BASE_URL",
+      "queryNullValue": "",
+      "output": "../FileManagementSystem.Web/src/services/api-client.ts"
+    }
+  }
+}

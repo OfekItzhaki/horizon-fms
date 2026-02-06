@@ -1,8 +1,8 @@
 import axios from 'axios';
 import type { FileItemDto, FolderDto, SearchFilesResult, GetFoldersResult } from '../types';
 
-// Use proxy in dev, or direct URL in production
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:5295/api');
+// Base URL for the API, defaults to Vite proxy in dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -59,7 +59,6 @@ export const fileApi = {
   },
 
   downloadFile: async (id: string): Promise<string> => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:5295/api');
     return `${API_BASE_URL}/files/${id}/download`;
   },
 };
