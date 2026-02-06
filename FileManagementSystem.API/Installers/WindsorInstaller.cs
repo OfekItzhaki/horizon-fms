@@ -97,8 +97,10 @@ public class WindsorInstaller : IWindsorInstaller
                 .ImplementedBy<StorageService>()
                 .DependsOn(
                     Dependency.OnValue<IConfiguration>(_configuration)
-                    // ILogger<StorageService> will be auto-wired by Castle Windsor
                 )
+                .LifestyleScoped(),
+            Component.For<IFilePathResolver>()
+                .ImplementedBy<FilePathResolver>()
                 .LifestyleScoped()
         );
 

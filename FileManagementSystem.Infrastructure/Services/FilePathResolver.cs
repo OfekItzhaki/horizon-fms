@@ -1,8 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Logging;
+using FileManagementSystem.Application.Interfaces;
 
-namespace FileManagementSystem.API.Services;
+namespace FileManagementSystem.Infrastructure.Services;
 
-public class FilePathResolver
+public class FilePathResolver : IFilePathResolver
 {
     private readonly ILogger<FilePathResolver> _logger;
 
@@ -77,9 +82,9 @@ public class FilePathResolver
             try
             {
                 var directory = Path.GetDirectoryName(storedPath);
-                if (!string.IsNullOrEmpty(directory) && System.IO.Directory.Exists(directory))
+                if (!string.IsNullOrEmpty(directory) && Directory.Exists(directory))
                 {
-                    var filesInDir = System.IO.Directory.GetFiles(directory);
+                    var filesInDir = Directory.GetFiles(directory);
                     _logger.LogWarning("Directory exists but file not found. Files in directory: {Files}", 
                         string.Join(", ", filesInDir.Select(Path.GetFileName)));
                 }
@@ -95,7 +100,7 @@ public class FilePathResolver
             storedPath, isCompressed, triedPaths.Count);
         foreach (var triedPath in triedPaths)
         {
-            var exists = System.IO.File.Exists(triedPath);
+            var exists = File.Exists(triedPath);
             _logger.LogError("  Path: {Path} | Exists: {Exists}", triedPath, exists);
         }
 
