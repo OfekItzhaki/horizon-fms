@@ -3,14 +3,15 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using FileManagementSystem.Application.Commands;
 using FileManagementSystem.Application.Queries;
-using FileManagementSystem.API.Services;
+using Asp.Versioning;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace FileManagementSystem.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class FilesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -199,11 +200,6 @@ public class FilesController : ControllerBase
     {
         var command = new RenameFileCommand(id, request.NewName);
         var result = await _mediator.Send(command, cancellationToken);
-
-        if (!result.Success)
-        {
-            return BadRequest(result.ErrorMessage);
-        }
 
         return Ok(result);
     }

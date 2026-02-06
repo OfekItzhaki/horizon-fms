@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using FileManagementSystem.Application.Queries;
 using FileManagementSystem.Application.Commands;
+using Asp.Versioning;
 
 namespace FileManagementSystem.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class FoldersController : ControllerBase
 {
@@ -72,11 +74,6 @@ public class FoldersController : ControllerBase
         var command = new RenameFolderCommand(id, request.NewName);
         var result = await _mediator.Send(command, cancellationToken);
         
-        if (!result.Success)
-        {
-            return BadRequest(result.ErrorMessage);
-        }
-        
         return Ok(result);
     }
 
@@ -91,11 +88,6 @@ public class FoldersController : ControllerBase
     {
         var command = new DeleteFolderCommand(id, deleteFiles);
         var result = await _mediator.Send(command, cancellationToken);
-        
-        if (!result.Success)
-        {
-            return BadRequest(result.ErrorMessage);
-        }
         
         return Ok(result);
     }

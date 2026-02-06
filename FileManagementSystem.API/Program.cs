@@ -21,14 +21,21 @@ using Castle.Windsor;
 using Castle.MicroKernel.Registration;
 using FileManagementSystem.API.Installers;
 
+using Asp.Versioning;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using AspNetCoreRateLimit;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
+// Configure Serilog with Seq
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
     .WriteTo.File("logs/api.log", rollingInterval: RollingInterval.Day)
     .WriteTo.Console()
+    .WriteTo.Seq(builder.Configuration["Serilog:SeqServerUrl"] ?? "http://localhost:5341")
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -36,6 +43,20 @@ builder.Host.UseSerilog();
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
@@ -44,6 +65,31 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1" 
     });
 });
+
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)
+    .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379")
+    .AddCheck("Storage", () => 
+    {
+        var path = builder.Configuration["Storage:RootPath"] ?? "data";
+        return Directory.Exists(path) 
+            ? HealthCheckResult.Healthy("Storage path is accessible") 
+            : HealthCheckResult.Unhealthy("Storage path is missing");
+    });
+
+// Redis Cache
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    options.InstanceName = "HorizonFMS_";
+});
+
+// Rate Limiting
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
 // Configure CORS for React frontend
 builder.Services.AddCors(options =>
@@ -158,6 +204,20 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 
+// Security Headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Add("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
+    await next();
+});
+
+// Rate Limiting
+app.UseIpRateLimiting();
+
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
@@ -169,6 +229,8 @@ app.UseMiddleware<FileManagementSystem.API.Middleware.WindsorScopeMiddleware>();
 app.UseMiddleware<FileManagementSystem.API.Middleware.GlobalExceptionHandlerMiddleware>();
 
 app.UseRouting();
+
+app.MapHealthChecks("/health");
 
 app.UseAuthorization();
 
