@@ -1,5 +1,6 @@
 import { useCallback, useState, memo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { fileApi } from '../services/api';
 
 interface FileUploadProps {
@@ -8,18 +9,22 @@ interface FileUploadProps {
 
 const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       return await fileApi.uploadFile(file, destinationFolderId);
     },
-    onSuccess: () => {
+    onSuccess: (_, file) => {
       // Invalidate and refetch files
       queryClient.invalidateQueries({ queryKey: ['files'] });
       queryClient.invalidateQueries({ queryKey: ['folders'] });
+      toast.success(`Successfully uploaded ${file.name}`);
     },
+    onError: (error: any, file) => {
+      console.error(`Error uploading ${file.name}:`, error);
+      toast.error(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`);
+    }
   });
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -50,12 +55,7 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
 
       // Upload all files
       for (const file of files) {
-        try {
-          await uploadMutation.mutateAsync(file);
-        } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
-          alert(`Failed to upload ${file.name}`);
-        }
+        uploadMutation.mutate(file);
       }
     },
     [uploadMutation]
@@ -68,12 +68,7 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
 
       // Upload all files
       for (const file of files) {
-        try {
-          await uploadMutation.mutateAsync(file);
-        } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
-          alert(`Failed to upload ${file.name}`);
-        }
+        uploadMutation.mutate(file);
       }
 
       // Reset input
@@ -93,13 +88,13 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
         borderRadius: '12px',
         padding: '3rem 2rem',
         textAlign: 'center',
-        background: isDragging 
-          ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' 
+        background: isDragging
+          ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
           : '#ffffff',
         cursor: 'pointer',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         marginBottom: '1.5rem',
-        boxShadow: isDragging 
+        boxShadow: isDragging
           ? '0 10px 25px -5px rgba(102, 126, 234, 0.2), 0 8px 10px -6px rgba(102, 126, 234, 0.1)'
           : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         transform: isDragging ? 'scale(1.02)' : 'scale(1)',
@@ -124,9 +119,9 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
         {isDragging ? (
           <div>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📤</div>
-            <p style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: '600', 
+            <p style={{
+              fontSize: '1.25rem',
+              fontWeight: '600',
               color: '#667eea',
               margin: 0
             }}>
@@ -136,17 +131,17 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
         ) : (
           <div>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📁</div>
-            <p style={{ 
-              fontSize: '1rem', 
+            <p style={{
+              fontSize: '1rem',
               color: '#475569',
               fontWeight: '500',
               margin: '0 0 0.5rem 0'
             }}>
               Drag and drop files here, or click to select files
             </p>
-            <p style={{ 
-              fontSize: '0.875rem', 
-              color: '#94a3b8', 
+            <p style={{
+              fontSize: '0.875rem',
+              color: '#94a3b8',
               margin: 0
             }}>
               Multiple files supported
@@ -155,8 +150,8 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
         )}
       </label>
       {uploadMutation.isPending && (
-        <div style={{ 
-          marginTop: '1.5rem', 
+        <div style={{
+          marginTop: '1.5rem',
           color: '#667eea',
           fontSize: '0.95rem',
           fontWeight: '500',
@@ -165,7 +160,7 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
           justifyContent: 'center',
           gap: '0.5rem'
         }}>
-          <span style={{ 
+          <span style={{
             display: 'inline-block',
             width: '16px',
             height: '16px',

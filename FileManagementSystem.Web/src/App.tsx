@@ -1,18 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
 import './App.css';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 30000, // Consider data fresh for 30 seconds
-      keepPreviousData: true, // Keep previous data while fetching new data for smoother transitions
-    },
-  },
-});
+const queryClient = new QueryClient(); // Simpler default options for now
 
 function App() {
   return (
@@ -22,6 +14,17 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
           </Routes>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#333',
+                color: '#fff',
+                borderRadius: '8px',
+              },
+            }}
+          />
         </div>
       </BrowserRouter>
     </QueryClientProvider>

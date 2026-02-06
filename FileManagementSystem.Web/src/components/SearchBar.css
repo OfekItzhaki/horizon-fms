@@ -1,41 +1,121 @@
-/* Desktop: prevent wrapping and overlap, fill header space */
-.search-bar-container,
-div[style*="flexWrap"] {
-  flex-wrap: nowrap !important;
-  width: 100% !important;
+.search-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0 1rem;
 }
 
-.search-bar-container > div:first-child {
-  flex: 2 1 0% !important;
-  min-width: 200px !important;
+.search-input-wrapper {
   position: relative;
+  flex: 0 0 auto;
+  width: 400px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.input-container {
+  position: relative;
+  width: 100%;
+}
+
+.main-search-input {
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.main-search-input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
   z-index: 1;
 }
 
-.search-bar-container > div:nth-child(2) {
-  flex: 1 0 auto !important;
-  min-width: fit-content;
-  position: relative;
-  z-index: 10;
-  margin-left: 0;
-  justify-content: flex-end;
+.clear-search-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
-/* Mobile responsive for search bar */
+.filter-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  position: relative;
+  z-index: 10;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filter-label:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.filter-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #ffffff;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
-  .search-bar-container {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-
-  .search-bar-container > div:first-child {
-    max-width: 100% !important;
-    flex: 1 1 auto !important;
-    margin-bottom: 0.75rem;
-  }
-
-  .search-bar-container > div:nth-child(2) {
+  .search-input-wrapper {
     width: 100%;
-    justify-content: space-between;
   }
 }

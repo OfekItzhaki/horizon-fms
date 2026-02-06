@@ -10,17 +10,16 @@ interface SearchBarProps {
   onDocumentOnlyChange: (value: boolean) => void;
 }
 
-const SearchBar = memo(({ 
-  searchTerm, 
-  onSearchChange, 
-  isPhotoOnly, 
+const SearchBar = memo(({
+  searchTerm,
+  onSearchChange,
+  isPhotoOnly,
   onPhotoOnlyChange,
   isDocumentOnly,
   onDocumentOnlyChange
 }: SearchBarProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,7 +32,6 @@ const SearchBar = memo(({
   // Debounce local search term and pass to parent
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(localSearchTerm);
       onSearchChange(localSearchTerm);
     }, 300);
 
@@ -57,189 +55,51 @@ const SearchBar = memo(({
   }, [onSearchChange]);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
-      padding: '0 2rem'
-    }} className={isMobile ? 'search-bar-container' : ''}>
-      <div style={{ 
-        display: 'flex', 
-        gap: '0.5rem', 
-        alignItems: 'center', 
-        flexWrap: 'nowrap',
-        flexDirection: 'row',
-        flex: '0 0 auto'
-      }}>
-        <div style={{ 
-          position: 'relative', 
-          flex: '0 0 auto',
-          width: '400px',
-          minWidth: '200px',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <input
-              type="text"
-              placeholder="Search files..."
-              value={localSearchTerm}
-              onChange={(e) => handleInputChange(e.target.value)}
-              style={{
-                padding: '0.75rem 1rem 0.75rem 2.5rem',
-                paddingRight: localSearchTerm ? '2.75rem' : '1rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
-                color: '#ffffff',
-                fontSize: '0.95rem',
-                width: '100%',
-                maxWidth: '100%',
-                boxSizing: 'border-box',
-                transition: 'all 0.2s',
-                outline: 'none',
+    <div className={`search-bar-container ${isMobile ? 'mobile' : ''}`}>
+      <div className="search-input-wrapper">
+        <div className="input-container">
+          <input
+            type="text"
+            placeholder="Search files..."
+            className="main-search-input"
+            value={localSearchTerm}
+            onChange={(e) => handleInputChange(e.target.value)}
+            style={{ paddingRight: localSearchTerm ? '2.75rem' : '1rem' }}
+          />
+          <span className="search-icon">🔍</span>
+          {localSearchTerm && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
               }}
-              onFocus={(e) => {
-                e.target.style.background = 'rgba(255, 255, 255, 0.25)';
-                e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-              }}
-              onBlur={(e) => {
-                e.target.style.background = 'rgba(255, 255, 255, 0.15)';
-                e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-              }}
-            />
-            <span style={{
-              position: 'absolute',
-              left: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '1.1rem',
-              color: 'rgba(255, 255, 255, 0.7)',
-              pointerEvents: 'none'
-            }}>🔍</span>
-            {localSearchTerm && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear();
-                }}
-                style={{
-                  position: 'absolute',
-                  right: '0.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  padding: '0.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s',
-                  width: '20px',
-                  height: '20px',
-                  lineHeight: '1',
-                  zIndex: 1
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
-                }}
-                title="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
+              className="clear-search-btn"
+              title="Clear search"
+            >
+              ×
+            </button>
+          )}
         </div>
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.75rem',
-          alignItems: 'center',
-          flex: '0 0 auto',
-          flexWrap: 'nowrap',
-          position: 'relative',
-          zIndex: 10
-        }}>
-        <label style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.5rem',
-          color: '#ffffff',
-          fontSize: '0.9rem',
-          fontWeight: '500',
-          cursor: 'pointer',
-          padding: '0.5rem 0.75rem',
-          borderRadius: '6px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.2s',
-          whiteSpace: 'nowrap'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-        }}
-        >
+      </div>
+      <div className="filter-controls">
+        <label className="filter-label">
           <input
             type="checkbox"
+            className="filter-checkbox"
             checked={isPhotoOnly}
             onChange={(e) => onPhotoOnlyChange(e.target.checked)}
-            style={{
-              width: '18px',
-              height: '18px',
-              cursor: 'pointer',
-              accentColor: '#ffffff',
-              flexShrink: 0
-            }}
           />
           Photos
         </label>
-        <label style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.5rem',
-          color: '#ffffff',
-          fontSize: '0.9rem',
-          fontWeight: '500',
-          cursor: 'pointer',
-          padding: '0.5rem 0.75rem',
-          borderRadius: '6px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.2s',
-          whiteSpace: 'nowrap'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-        }}
-        >
-        <input
-          type="checkbox"
-          checked={isDocumentOnly}
-          onChange={(e) => onDocumentOnlyChange(e.target.checked)}
-          style={{
-            width: '18px',
-            height: '18px',
-            cursor: 'pointer',
-            accentColor: '#ffffff'
-          }}
-        />
-        Documents
+        <label className="filter-label">
+          <input
+            type="checkbox"
+            className="filter-checkbox"
+            checked={isDocumentOnly}
+            onChange={(e) => onDocumentOnlyChange(e.target.checked)}
+          />
+          Documents
         </label>
-      </div>
       </div>
     </div>
   );
