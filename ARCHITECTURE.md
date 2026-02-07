@@ -58,6 +58,19 @@ This document defines the "Golden Rules" and the architectural standards. It is 
   - API must handle slow database/cache startup via connection retries
   - Services must be self-healing with Docker restart policies
   - Ensures high availability in distributed container environments (ADR 007)
+- **Persistence Strategy**: All infrastructure data (DB, Cache, Logs) must persist across restarts via Docker volumes.
+
+## 🚀 DevOps Workflow Patterns
+
+### Northern Workflow (Build & Test)
+- **Goal**: Code quality and logical correctness.
+- **Tools**: VS Code, PowerShell (`setup-dev.ps1`), GitHub Actions.
+- **Rule**: Never merge if `dotnet test` or `npm run build` fails.
+
+### Southern Workflow (Docker & Deploy)
+- **Goal**: Environment parity and deployment reliability.
+- **Tools**: Docker Compose, Health Checks.
+- **Rule**: A feature is only "Done" when it passes health checks in the container mesh.
 
 ## 🌿 Git & Collaboration
 - **Branch Naming**: 
@@ -259,6 +272,13 @@ Implement these HTTP response headers to protect users from common web attacks:
 - **ADR 005: Caching**: Chose Redis for distributed caching to support horizontal scaling and session management.
 - **ADR 006: API Versioning**: Chose URI-based versioning (`/api/v1/`) over header-based for simplicity and API discoverability.
 - **ADR 007: Resilience**: Chose connection retries + orchestration health checks to solve container startup race conditions and improve robustness.
+
+## ✅ Gold Standard Verification
+The project achieves "Gold Standard" via:
+1. **Zero-Error Frontend**: No unused vars, no `any` types, Vite build success.
+2. **Stable Infrastructure**: Health checks for all services.
+3. **Resilient API**: Transient fault handling for DB/Cache.
+4. **Comprehensive Docs**: ARCHITECTURE.md and HORIZON_GUARDIAN.md blueprints.
 
 ## 🤖 Future Agent Instructions
 1. **Read the Blueprint**: Always check this file before implementing new features.

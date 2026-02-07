@@ -17,7 +17,7 @@ services:
     restart: always
 
   seq:
-    image: datalust/seq:latest
+    image: datalust/seq:2024.3
     environment:
       - ACCEPT_EULA=Y
     ports:
