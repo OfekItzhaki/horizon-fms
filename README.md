@@ -1,110 +1,197 @@
-# File Management System
+# Horizon FMS - File Management System
 
-A production-ready file management application built with **Clean Architecture**, featuring a **React + TypeScript** frontend and **ASP.NET Core Web API** backend.
+**A production-ready, enterprise-grade file management application built with Clean Architecture and industrial-strength observability.**
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]() [![Tests](https://img.shields.io/badge/tests-33%2F33-success)]() [![.NET](https://img.shields.io/badge/.NET-8.0-blue)]() [![React](https://img.shields.io/badge/React-19-blue)]()
+
+> 🛡️ **This project serves as the reference implementation for [Horizon Guardian](HORIZON_GUARDIAN.md)** - an AI-powered architecture enforcement engine.
+
+---
 
 ## 🚀 Features
 
-- **Directory Scanning**: Async directory scanning with progress reporting
-- **File Upload/Organization**: Automatic file deduplication by SHA256 hash
-- **Photo Metadata Extraction**: EXIF data extraction (date, GPS, camera info) via SixLabors.ImageSharp
-- **Tagging & Search**: Full-text search with EF Core, tag-based filtering
-- **Thumbnails**: Async thumbnail generation for photos
-- **Folder Hierarchy**: Tree navigation with hierarchical folder structure
-- **Drag & Drop**: File upload via drag-and-drop (React)
-- **Delete/Rename**: File operations with undo capability (planned)
-- **Modern Stack**: .NET 8, React 19, TypeScript, Clean Architecture
+### Core Functionality
+- **📁 Folder Management**: Create, rename, delete folders with hierarchical tree navigation
+- **📄 File Operations**: Upload, rename, delete files with drag-and-drop support
+- **🔍 Advanced Search**: Full-text search with tag-based filtering
+- **🖼️ Photo Metadata**: EXIF extraction (date, GPS, camera info) via SixLabors.ImageSharp
+- **🎯 Smart Deduplication**: SHA256-based file deduplication
+- **📸 Thumbnails**: Async thumbnail generation for images
+
+### Industrial-Grade Features
+- **🔍 Seq Integration**: Beautiful structured logging with visual query interface
+- **❤️ Health Checks**: `/health` endpoint for orchestration and monitoring
+- **🔄 API Versioning**: URI-based versioning (`/api/v1/...`)
+- **🛡️ Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **⚡ Rate Limiting**: IP-based rate limiting (100 req/min)
+- **💾 Redis Caching**: Distributed caching for horizontal scaling
+- **🐳 Container-First**: Full Docker Compose mesh (API, Web, Postgres, Seq, Redis)
+
+---
 
 ## 🏗️ Architecture
 
-The solution follows **Clean Architecture** principles with clear separation of concerns:
+This project follows **Clean Architecture** with 8 architectural pillars (see [ARCHITECTURE.md](ARCHITECTURE.md)):
 
 ```
 FileManagementSystem/
-├── Domain/              # Entities and domain exceptions
-├── Application/         # DTOs, Commands/Queries (MediatR), Validators (FluentValidation)
-├── Infrastructure/      # EF Core DbContext, Repositories, Services
-├── API/                 # ASP.NET Core Web API (REST endpoints)
+├── Domain/              # Entities, domain exceptions
+├── Application/         # Commands/Queries (MediatR), Handlers, DTOs
+├── Infrastructure/      # EF Core, Repositories, Services
+├── API/                 # ASP.NET Core Web API, Controllers, Middleware
 ├── Web/                 # React + TypeScript frontend
-└── Tests/              # xUnit unit and integration tests
+└── Tests/              # xUnit tests (33 tests, 100% pass rate)
 ```
+
+### Architectural Pillars
+1. **Single Source of Truth API** (NSwag auto-generated TypeScript client)
+2. **Standardized Error Handling** (Global Middleware + ProblemDetails)
+3. **Container-First** (Docker Compose for all services)
+4. **Background Jobs** (Offloading for slow operations)
+5. **Resilient Session Management** (401 interceptor + auto-refresh)
+6. **Universal State & Caching** (TanStack Query)
+7. **Real-time Communication** (Socket.IO ready)
+8. **Observability & Health Monitoring** (Seq + Health Checks)
+
+---
 
 ## 🛠️ Technology Stack
 
 ### Backend
-- **.NET 8.0** - Target framework
-- **ASP.NET Core Web API** - RESTful API
-- **Entity Framework Core 8.0** - ORM with SQLite provider
-- **MediatR 12.2.0** - CQRS pattern implementation
+- **.NET 8.0** - Modern C# with file-scoped namespaces
+- **ASP.NET Core Web API** - RESTful API with API Versioning
+- **PostgreSQL** - Production-grade relational database
+- **Entity Framework Core 8.0** - ORM with migrations
+- **MediatR 12.2.0** - CQRS pattern
 - **FluentValidation 11.9.0** - Command validation
-- **Serilog** - Structured logging (file and console sinks)
-- **SixLabors.ImageSharp 3.1.2** - Image processing and EXIF extraction
+- **Serilog + Seq** - Structured logging with visual query UI
+- **Redis** - Distributed caching
+- **NSwag** - OpenAPI client generation
 
 ### Frontend
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **React Query (TanStack Query)** - Data fetching and caching
-- **React Router** - Navigation
-- **Axios** - HTTP client
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Full type safety (zero `any` types)
+- **Vite** - Lightning-fast build tool
+- **TanStack Query** - Data fetching, caching, and state management
+- **React Router** - Client-side routing
+- **Auto-generated API Client** - Type-safe API calls via NSwag
 
-## 📦 Getting Started
+### DevOps
+- **Docker & Docker Compose** - Containerized deployment
+- **GitHub Actions** - CI/CD pipeline (build, test, lint)
+- **Health Checks** - Kubernetes-ready health endpoints
+
+---
+
+## 📦 Quick Start
 
 ### Prerequisites
+- **Docker Desktop** (recommended) OR
+- **.NET 8.0 SDK** + **Node.js 20+** + **PostgreSQL**
 
-- .NET 8.0 SDK or later
-- Node.js 20.9+ (or 22.12+) and npm (for Web project)
-- Visual Studio 2022 or VS Code
-
-### Running the Application
-
-#### 1. Start the API Backend
+### Option 1: Docker Compose (Recommended)
 
 ```bash
-cd FileManagementSystem.API
-dotnet run
+# Clone the repository
+git clone https://github.com/OfekItzhaki/horizon-fms.git
+cd horizon-fms
+
+# Start all services
+docker-compose up -d
+
+# Access the application
+# Web UI: http://localhost:3000
+# API: http://localhost:5000
+# Seq Logs: http://localhost:5341
+# Swagger: http://localhost:5000/swagger
 ```
 
-The API will be available at:
-- HTTP: `http://localhost:5295`
-- HTTPS: `https://localhost:7136`
-- Swagger UI: `https://localhost:7136/swagger`
+**Services Started:**
+- `horizon-fms-api`: ASP.NET Core API
+- `horizon-fms-web`: React frontend
+- `postgres`: PostgreSQL database
+- `seq`: Structured logging UI
+- `redis`: Distributed cache
 
-#### 2. Start the React Frontend
+### Option 2: Development Mode
 
 ```bash
+# Terminal 1: Start API
+cd FileManagementSystem.API
+dotnet run
+
+# Terminal 2: Start Web
 cd FileManagementSystem.Web
 npm install
 npm run dev
 ```
 
-The React app will be available at `http://localhost:5173` (or the port Vite assigns)
+---
 
-### Building the Solution
+## 🧪 Testing
+
+### Run Tests
 
 ```bash
-# Restore packages
-dotnet restore
+# Run all tests
+dotnet test
 
-# Build the solution
-dotnet build
+# Run with detailed output
+dotnet test --verbosity normal
 
-# Build React app
-cd FileManagementSystem.Web
-npm run build
+# Run specific test project
+dotnet test FileManagementSystem.Tests/FileManagementSystem.Tests.csproj
 ```
 
-### Database Setup
+### Test Coverage
 
-The application uses SQLite and will automatically create the database on first run. The database file (`filemanager.db`) will be created in the API project's output directory.
+**33 unit tests** covering all Command Handlers:
+- ✅ `CreateFolderCommandHandlerTests` (6 tests)
+- ✅ `DeleteFolderCommandHandlerTests` (6 tests)
+- ✅ `RenameFolderCommandHandlerTests` (5 tests)
+- ✅ `UploadFileCommandHandlerTests` (6 tests)
+- ✅ `DeleteFileCommandHandlerTests` (4 tests)
+- ✅ `RenameFileCommandHandlerTests` (6 tests)
+
+Tests use **xUnit**, **Moq**, and **FluentAssertions** for readable, maintainable test code.
+
+---
 
 ## 🔧 Configuration
 
-### API Configuration (`FileManagementSystem.API/appsettings.json`)
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# Database
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=filemanagement
+
+# API
+ASPNETCORE_ENVIRONMENT=Development
+ConnectionStrings__DefaultConnection=Host=postgres;Database=filemanagement;Username=postgres;Password=your_password
+
+# Redis
+REDIS_CONNECTION=redis:6379
+
+# Seq
+SEQ_URL=http://seq:5341
+```
+
+### API Configuration (`appsettings.json`)
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=filemanager.db"
+    "DefaultConnection": "Host=localhost;Database=filemanagement;Username=postgres;Password=your_password"
+  },
+  "Seq": {
+    "ServerUrl": "http://localhost:5341"
+  },
+  "Redis": {
+    "Configuration": "localhost:6379"
   },
   "ThumbnailSettings": {
     "MaxWidth": 200,
@@ -113,136 +200,168 @@ The application uses SQLite and will automatically create the database on first 
 }
 ```
 
-### Frontend Configuration
+---
 
-The React app uses a Vite proxy to connect to the API. The proxy is configured in `FileManagementSystem.Web/vite.config.ts`.
+## 📖 API Documentation
 
-## 📖 Usage
+### Swagger UI
+Access interactive API documentation at: `http://localhost:5000/swagger`
 
-### Scanning a Directory
-
-1. Use the API endpoint: `POST /api/files/scan` (to be implemented)
-2. Or use the file upload feature
-
-### Searching Files
-
-- Use the search bar in the React UI
-- Filter by photos only
-- Search by tags, filename, or metadata
-
-### Managing Files
-
-- **Upload**: Drag and drop files or use the upload button
-- **Rename**: Click on a file and use the rename action
-- **Delete**: Select a file and delete (moves to recycle bin)
-
-## 🧪 Testing
-
-The project includes comprehensive unit tests using xUnit, Moq, and FluentAssertions.
-
-### Running Tests
-
+### Health Check
 ```bash
-# Run all tests
-dotnet test
-
-# Run tests with detailed output
-dotnet test --verbosity normal
-
-# Run tests for a specific project
-dotnet test FileManagementSystem.Tests/FileManagementSystem.Tests.csproj
+curl http://localhost:5000/health
 ```
 
-### Test Coverage
+**Response:**
+```json
+{
+  "status": "Healthy",
+  "checks": {
+    "database": "Healthy",
+    "redis": "Healthy",
+    "storage": "Healthy"
+  }
+}
+```
 
-- **33 unit tests** covering all major command handlers:
-  - `UploadFileCommandHandlerTests` (6 tests)
-  - `DeleteFileCommandHandlerTests` (4 tests)
-  - `CreateFolderCommandHandlerTests` (6 tests)
-  - `RenameFileCommandHandlerTests` (6 tests)
-  - `DeleteFolderCommandHandlerTests` (6 tests)
-  - `RenameFolderCommandHandlerTests` (5 tests)
+### API Versioning
+All endpoints are versioned: `/api/v1/files`, `/api/v1/folders`
 
-Tests cover both success scenarios and error cases, including validation, path traversal protection, and edge cases.
+---
 
-## 📝 Project Structure
+## 🛡️ Security Features
 
-### Domain Layer
-- `Entities/`: FileItem, Folder, User entities
+### Security Headers
+- **CSP (Content-Security-Policy)**: Prevents XSS attacks
+- **X-Frame-Options: DENY**: Prevents clickjacking
+- **X-Content-Type-Options: nosniff**: Prevents MIME-sniffing attacks
+- **Referrer-Policy: no-referrer**: Protects sensitive URLs
+
+### Rate Limiting
+- **100 requests/minute per IP** to prevent abuse and DDoS
+
+### Data Protection
+- **SHA256 hashing** for file deduplication
+- **Path sanitization** to prevent directory traversal
+- **File type validation** with MIME type checking
+
+---
+
+## 📊 Observability
+
+### Seq Structured Logging
+Access Seq at `http://localhost:5341` to:
+- Search logs with queries: `Level == "Error" && UserId == "123"`
+- Filter by timestamp, user, request ID
+- Visualize error trends and performance metrics
+
+### Logging Best Practices
+All logs are structured with contextual properties:
+```csharp
+_logger.LogInformation("File uploaded: {FileName} by {UserId}", fileName, userId);
+```
+
+---
+
+## 🏗️ Project Structure
+
+### Domain Layer (`FileManagementSystem.Domain`)
+- `Entities/`: FileItem, Folder, User
 - `Exceptions/`: Domain-specific exceptions
 
-### Application Layer
-- `Commands/`: MediatR commands (ScanDirectoryCommand, UploadFileCommand, etc.)
-- `Queries/`: MediatR queries (SearchFilesQuery, GetFoldersQuery, etc.)
-- `DTOs/`: Data transfer objects
+### Application Layer (`FileManagementSystem.Application`)
+- `Commands/`: MediatR commands (CreateFolder, UploadFile, etc.)
+- `Queries/`: MediatR queries (GetFiles, SearchFiles, etc.)
 - `Handlers/`: Command and query handlers
+- `DTOs/`: Data transfer objects
 - `Validators/`: FluentValidation validators
-- `Behaviors/`: MediatR pipeline behaviors (logging, validation, authorization)
-- `Services/`: Application services (UploadDestinationResolver, FolderPathService)
-- `Utilities/`: Shared utility classes (MimeTypeHelper)
-- `Interfaces/`: Application layer interfaces
-- `Mappings/`: Entity to DTO mapping extensions
+- `Interfaces/`: Application contracts
 
-### Infrastructure Layer
-- `Data/`: AppDbContext and EF Core configuration
+### Infrastructure Layer (`FileManagementSystem.Infrastructure`)
+- `Data/`: AppDbContext, EF Core configuration
 - `Repositories/`: Repository implementations
-- `Services/`: Infrastructure services (MetadataService, StorageService, AuthenticationService, etc.)
+- `Services/`: MetadataService, StorageService, etc.
 
-### API Layer
-- `Controllers/`: REST API endpoints (FilesController, FoldersController)
-- `Middleware/`: Global exception handling, Windsor scope management
-- `Installers/`: Castle Windsor dependency injection configuration
-- `Services/`: API-specific services (FilePathResolver)
+### API Layer (`FileManagementSystem.API`)
+- `Controllers/`: FilesController, FoldersController
+- `Middleware/`: GlobalExceptionHandlerMiddleware
+- `Program.cs`: Dependency injection, middleware pipeline
 
-### Web Layer (React)
-- `src/components/`: React components (Dashboard, FileList, FolderTree, etc.)
-- `src/services/`: API client and services
+### Web Layer (`FileManagementSystem.Web`)
+- `src/components/`: React components (Dashboard, FileList, FolderTree)
+- `src/services/`: Auto-generated API client (NSwag)
 - `src/types/`: TypeScript type definitions
 
-### Tests Layer
-- `Handlers/`: Unit tests for command and query handlers (33 tests covering all major operations)
+---
 
-## ✅ Best Practices Implemented
+## ✅ Golden Rules Compliance
 
-- ✅ **Clean Architecture**: Clear separation of concerns with well-defined layers
-- ✅ **CQRS**: Commands and Queries separation using MediatR
-- ✅ **DRY Principle**: Shared utilities (MimeTypeHelper) and services (FolderPathService) to avoid code duplication
-- ✅ **Single Responsibility**: Handlers focused on orchestration, business logic in services
-- ✅ **Async/Await**: All I/O operations are async
-- ✅ **Dependency Injection**: Microsoft.Extensions.DependencyInjection and Castle Windsor
-- ✅ **Validation**: FluentValidation on all commands
-- ✅ **Logging**: Serilog with structured logging
-- ✅ **Error Handling**: Custom exceptions and try-catch with user-friendly messages
-- ✅ **Security**: Path sanitization, file size/type validation, SHA256 hashing
-- ✅ **Performance**: Background tasks, EF AsNoTracking for reads, React Query caching
-- ✅ **Type Safety**: TypeScript throughout the frontend
-- ✅ **Unit Testing**: Comprehensive test coverage with xUnit, Moq, and FluentAssertions
-- ✅ **Modular Design**: Services and utilities extracted for reusability and maintainability
+This project strictly follows the [ARCHITECTURE.md](ARCHITECTURE.md) golden rules:
 
-## 📚 Additional Documentation
+- ✅ **Thin Controllers**: No business logic, only `return await _mediator.Send(command);`
+- ✅ **Global Error Handling**: No `try-catch` in Controllers; middleware handles all exceptions
+- ✅ **Type Safety**: Zero `any` types in TypeScript; proper Error types everywhere
+- ✅ **Component Modularity**: All components under 200 lines
+- ✅ **Single Source of Truth**: Auto-generated NSwag client for API calls
+- ✅ **Container-First**: All services in `docker-compose.yml`
+- ✅ **Observability**: Seq for structured logging, `/health` endpoint
+- ✅ **Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options, Rate Limiting
 
-- Architecture and migration plans are available in the `instructions/` folder (not committed to repository)
-- Database migration scripts are located in `instructions/` folder
+---
 
-## 📄 License
+## 🚀 Deployment
 
-This project is provided as-is for demonstration purposes.
+### Docker Production Build
+
+```bash
+# Build production images
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+
+# Deploy to production
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Kubernetes (Coming Soon)
+Health checks are Kubernetes-ready for liveness and readiness probes.
+
+---
+
+## 📚 Additional Resources
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Complete architectural standards and golden rules
+- **[HORIZON_GUARDIAN.md](HORIZON_GUARDIAN.md)**: Product blueprint for AI-powered architecture enforcement
+- **[Walkthrough](https://github.com/OfekItzhaki/horizon-fms/wiki)**: Detailed implementation walkthrough
+
+---
 
 ## 🤝 Contributing
 
-Feel free to extend this application with additional features:
-- Cloud storage integration (Azure Blob, AWS S3)
-- Batch operations
-- Advanced search filters
-- Image editing capabilities
-- Export functionality
-- Plugin system
+This project serves as a reference implementation of elite fullstack standards. Contributions should:
+1. Follow the [ARCHITECTURE.md](ARCHITECTURE.md) golden rules
+2. Include unit tests (maintain 100% test pass rate)
+3. Use conventional commits (`feat:`, `fix:`, `chore:`, etc.)
+4. Pass all CI/CD checks (build, test, lint)
 
-## 🏗️ Code Organization
+---
 
-The codebase follows Clean Architecture principles with:
-- **Utilities**: Shared helper classes (e.g., `MimeTypeHelper`)
-- **Services**: Business logic services (e.g., `FolderPathService`, `UploadDestinationResolver`)
-- **Handlers**: Thin orchestration layer delegating to services
-- **Repositories**: Data access abstraction
-- **Clear separation**: Each layer has well-defined responsibilities
+## 📄 License
+
+This project is provided as-is for demonstration and educational purposes.
+
+---
+
+## 🎯 Roadmap
+
+- [ ] Real-time collaboration via Socket.IO
+- [ ] Background job processing with BullMQ
+- [ ] Cloud storage integration (Azure Blob, AWS S3)
+- [ ] Advanced search with Elasticsearch
+- [ ] Image editing capabilities
+- [ ] Mobile app (React Native)
+- [ ] Plugin system for extensibility
+
+---
+
+**Built with ❤️ using Clean Architecture and Industrial-Grade Standards**
+
+*This project powers the [Horizon Guardian](HORIZON_GUARDIAN.md) enforcement engine.*
