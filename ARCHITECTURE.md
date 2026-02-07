@@ -54,6 +54,10 @@ This document defines the "Golden Rules" and the architectural standards. It is 
   - Return: 200 (Healthy) or 503 (Unhealthy) with diagnostic details
   - Used by: Docker, Kubernetes, load balancers for automated recovery
 - **Metrics**: Track request counts, error rates, and response times for performance monitoring
+- **Transient Fault Handling**: Implement retries and circuit breakers for infrastructure dependencies
+  - API must handle slow database/cache startup via connection retries
+  - Services must be self-healing with Docker restart policies
+  - Ensures high availability in distributed container environments (ADR 007)
 
 ## 🌿 Git & Collaboration
 - **Branch Naming**: 
@@ -254,6 +258,7 @@ Implement these HTTP response headers to protect users from common web attacks:
 - **ADR 004: Observability**: Chose Seq for structured logging over ELK Stack for simplicity and superior developer experience.
 - **ADR 005: Caching**: Chose Redis for distributed caching to support horizontal scaling and session management.
 - **ADR 006: API Versioning**: Chose URI-based versioning (`/api/v1/`) over header-based for simplicity and API discoverability.
+- **ADR 007: Resilience**: Chose connection retries + orchestration health checks to solve container startup race conditions and improve robustness.
 
 ## 🤖 Future Agent Instructions
 1. **Read the Blueprint**: Always check this file before implementing new features.

@@ -100,7 +100,7 @@ export class Client implements IClient {
      * @return OK
      */
     filesGET(searchTerm?: string | undefined, tags?: string[] | undefined, isPhoto?: boolean | undefined, folderId?: string | undefined, skip?: number | undefined, take?: number | undefined): Promise<SearchFilesResult> {
-        let url_ = this.baseUrl + "/api/Files?";
+        let url_ = this.baseUrl + "/api/v1/Files?";
         if (searchTerm === null)
             throw new globalThis.Error("The parameter 'searchTerm' cannot be null.");
         else if (searchTerm !== undefined)
@@ -144,13 +144,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchFilesResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SearchFilesResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<SearchFilesResult>(null as any);
@@ -160,7 +160,7 @@ export class Client implements IClient {
      * @return OK
      */
     filesGET2(id: string): Promise<void> {
-        let url_ = this.baseUrl + "/api/Files/{id}";
+        let url_ = this.baseUrl + "/api/v1/Files/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -182,11 +182,11 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+                return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<void>(null as any);
@@ -197,7 +197,7 @@ export class Client implements IClient {
      * @return OK
      */
     filesDELETE(id: string, moveToRecycleBin?: boolean | undefined): Promise<void> {
-        let url_ = this.baseUrl + "/api/Files/{id}?";
+        let url_ = this.baseUrl + "/api/v1/Files/{id}?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -223,11 +223,11 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+                return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<void>(null as any);
@@ -237,7 +237,7 @@ export class Client implements IClient {
      * @return OK
      */
     download(id: string): Promise<void> {
-        let url_ = this.baseUrl + "/api/Files/{id}/download";
+        let url_ = this.baseUrl + "/api/v1/Files/{id}/download";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -259,11 +259,11 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+                return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<void>(null as any);
@@ -275,7 +275,7 @@ export class Client implements IClient {
      * @return OK
      */
     upload(file?: FileParameter | undefined, destinationFolderId?: string | undefined): Promise<UploadFileResult> {
-        let url_ = this.baseUrl + "/api/Files/upload";
+        let url_ = this.baseUrl + "/api/v1/Files/upload";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = new FormData();
@@ -306,13 +306,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UploadFileResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UploadFileResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<UploadFileResult>(null as any);
@@ -323,7 +323,7 @@ export class Client implements IClient {
      * @return OK
      */
     rename(id: string, body?: RenameFileRequest | undefined): Promise<RenameFileResult> {
-        let url_ = this.baseUrl + "/api/Files/{id}/rename";
+        let url_ = this.baseUrl + "/api/v1/Files/{id}/rename";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -350,13 +350,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RenameFileResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RenameFileResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<RenameFileResult>(null as any);
@@ -367,7 +367,7 @@ export class Client implements IClient {
      * @return OK
      */
     tags(id: string, body?: AddTagsRequest | undefined): Promise<void> {
-        let url_ = this.baseUrl + "/api/Files/{id}/tags";
+        let url_ = this.baseUrl + "/api/v1/Files/{id}/tags";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -393,11 +393,11 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+                return;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<void>(null as any);
@@ -408,7 +408,7 @@ export class Client implements IClient {
      * @return OK
      */
     foldersGET(parentFolderId?: string | undefined): Promise<GetFoldersResult> {
-        let url_ = this.baseUrl + "/api/Folders?";
+        let url_ = this.baseUrl + "/api/v1/Folders?";
         if (parentFolderId === null)
             throw new globalThis.Error("The parameter 'parentFolderId' cannot be null.");
         else if (parentFolderId !== undefined)
@@ -432,13 +432,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GetFoldersResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GetFoldersResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<GetFoldersResult>(null as any);
@@ -449,7 +449,7 @@ export class Client implements IClient {
      * @return OK
      */
     foldersPOST(body?: CreateFolderRequest | undefined): Promise<CreateFolderResult> {
-        let url_ = this.baseUrl + "/api/Folders";
+        let url_ = this.baseUrl + "/api/v1/Folders";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -473,19 +473,19 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CreateFolderResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CreateFolderResult;
+                return result200;
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Bad Request", status, _responseText, _headers, result400);
+                let result400: any = null;
+                result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+                return throwException("Bad Request", status, _responseText, _headers, result400);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<CreateFolderResult>(null as any);
@@ -496,7 +496,7 @@ export class Client implements IClient {
      * @return OK
      */
     rename2(id: string, body?: RenameFolderRequest | undefined): Promise<RenameFolderResult> {
-        let url_ = this.baseUrl + "/api/Folders/{id}/rename";
+        let url_ = this.baseUrl + "/api/v1/Folders/{id}/rename";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -523,13 +523,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RenameFolderResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RenameFolderResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<RenameFolderResult>(null as any);
@@ -540,7 +540,7 @@ export class Client implements IClient {
      * @return OK
      */
     foldersDELETE(id: string, deleteFiles?: boolean | undefined): Promise<DeleteFolderResult> {
-        let url_ = this.baseUrl + "/api/Folders/{id}?";
+        let url_ = this.baseUrl + "/api/v1/Folders/{id}?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -567,13 +567,13 @@ export class Client implements IClient {
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeleteFolderResult;
-            return result200;
+                let result200: any = null;
+                result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeleteFolderResult;
+                return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
         return Promise.resolve<DeleteFolderResult>(null as any);
