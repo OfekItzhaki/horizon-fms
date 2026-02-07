@@ -31,8 +31,8 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
       setShowCreateInput(false);
       toast.success('Folder created successfully');
     },
-    onError: (error: any) => {
-      toast.error(`Failed to create folder: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+    onError: (error: Error) => {
+      toast.error(`Failed to create folder: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -43,8 +43,8 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
       queryClient.invalidateQueries({ queryKey: ['files'] });
       toast.success('Folder renamed successfully');
     },
-    onError: (error: any) => {
-      toast.error(`Failed to rename folder: ${error.response?.data?.errorMessage || error.message || 'Unknown error'}`);
+    onError: (error: Error) => {
+      toast.error(`Failed to rename folder: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -56,8 +56,8 @@ const FolderTree = memo(({ folders, onFolderSelect, selectedFolderId }: FolderTr
       if (selectedFolderId) onFolderSelect(undefined);
       toast.success('Folder deleted successfully');
     },
-    onError: (error: any) => {
-      let errorMessage = error.response?.data?.errorMessage || error.response?.data?.message || error.message || 'Unknown error';
+    onError: (error: Error) => {
+      const errorMessage = error.message || 'Unknown error';
       toast.error(errorMessage);
     },
   });

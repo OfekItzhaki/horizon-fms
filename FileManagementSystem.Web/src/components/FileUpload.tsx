@@ -21,7 +21,7 @@ const FileUpload = memo(({ destinationFolderId }: FileUploadProps) => {
       queryClient.invalidateQueries({ queryKey: ['folders'] });
       toast.success(`Successfully uploaded ${file.name}`);
     },
-    onError: (error: any, file) => {
+    onError: (error: Error, file) => {
       toast.error(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`);
     }
   });

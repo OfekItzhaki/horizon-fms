@@ -78,7 +78,7 @@ const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
       toast.success('File deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to delete file: ${error.message || 'Unknown error'}`);
     }
   });
