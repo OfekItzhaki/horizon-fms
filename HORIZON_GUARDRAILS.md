@@ -1,8 +1,8 @@
-# 🛡️ Guardian Guardrails: The Architecture Enforcement Engine
+# 🛡️ Horizon Guardrails: The Architecture Enforcement Engine
 
 **Tagline**: *"The Guardrails for AI-Generated Code"*
 
-This document is the **Master Blueprint** for building **Guardian Guardrails**—a revolutionary product that automates and enforces elite architectural standards in software projects. It solves the "AI-Generated Spaghetti Code" problem by teaching, auditing, and auto-fixing violations in real-time.
+This document is the **Master Blueprint** for building **Horizon Guardrails**—a revolutionary product that automates and enforces elite architectural standards in software projects. It solves the "AI-Generated Spaghetti Code" problem by teaching, auditing, and auto-fixing violations in real-time.
 
 ---
 
@@ -13,7 +13,7 @@ This document is the **Master Blueprint** for building **Guardian Guardrails**�
 - **Junior Devs**: Don't know *why* we use MediatR, PostgreSQL, or Clean Architecture
 - **The Agentic Future**: In 2 years, most code will be written by AI agents—they need **constraints**
 
-**Guardian Guardrails** is the "Building Inspector" for the AI Age.
+**Horizon Guardrails** is the "Building Inspector" for the AI Age.
 
 ---
 
@@ -73,14 +73,14 @@ When you write code, follow these patterns exactly. If you violate a rule, stop 
 
 ## 💎 The "Summary/Learning" Panel (The Mentorship Feature)
 
-**This is what makes Guardian Guardrails a MENTOR, not just a linter.**
+**This is what makes Horizon Guardrails a MENTOR, not just a linter.**
 
 ### Traditional Linter:
 ```
 ❌ Error: Don't use ViewBag (line 42)
 ```
 
-### Guardian Guardrails:
+### Horizon Guardrails:
 ```
 🛡️ Violation Detected: ViewBag Usage (Rule #9)
 
@@ -116,15 +116,15 @@ It prevents 90% of "NullReferenceException" bugs in production.
 
 ### 3. **The Enterprise Pain Point**
 - Companies are **scared** of AI-generated code creating technical debt
-- Guardian Guardrails = "Safe AI Adoption"
+- Horizon Guardrails = "Safe AI Adoption"
 
 ---
 
 ## 🎙️ The "Million Dollar" Prompt (Recursive Self-Enforcement)
 
-**Use this prompt to build Guardian Guardrails itself:**
+**Use this prompt to build Horizon Guardrails itself:**
 
-> "I want to build a platform called **'Guardian Guardrails'**. Its purpose is to automate and enforce 'Elite Fullstack Standards' in software projects.
+> "I want to build a platform called **'Horizon Guardrails'**. Its purpose is to automate and enforce 'Elite Fullstack Standards' in software projects.
 >
 > ### Step 1: The Design
 > You are a Lead Software Architect. Create a project using the **Clean Architecture** pattern.
@@ -140,20 +140,20 @@ It prevents 90% of "NullReferenceException" bugs in production.
 > - Returns a structured report with violation details and suggested fixes
 >
 > ### Step 3: Self-Correction (CRITICAL)
-> Write an initial `ARCHITECTURE.md` for **Guardian Guardrails itself**.
+> Write an initial `ARCHITECTURE.md` for **Horizon Guardrails itself**.
 > Every line of code you write for Guardian must strictly follow its own 'Elite Standards.'
 > If you find yourself writing a 'Fat Controller' or inline styles, **stop and refactor immediately**.
 >
 > ### Step 4: The CLI
 > Build a simple CLI tool that can be used in a GitHub Action to report violations back to the Guardian API.
 >
-> Start by defining the solution structure and the initial ARCHITECTURE.md for Guardian Guardrails itself."
+> Start by defining the solution structure and the initial ARCHITECTURE.md for Horizon Guardrails itself."
 
 ---
 
 ## 🛠️ The "v1 Template" (Horizon FMS Standards)
 
-Use the `ARCHITECTURE.md` from the Horizon FMS project as the **first ruleset** for Guardian Guardrails.
+Use the `ARCHITECTURE.md` from the Horizon FMS project as the **first ruleset** for Horizon Guardrails.
 
 **Key Rules**:
 1. **Thin Controllers**: No logic. Only `return await _mediator.Send(command);`
@@ -190,12 +190,12 @@ Use the `ARCHITECTURE.md` from the Horizon FMS project as the **first ruleset** 
 
 ---
 
-## 📖 Architecture Decision Records (Guardian Guardrails)
+## 📖 Architecture Decision Records (Horizon Guardrails)
 
-- **ADR 001: Name**: Chose "Guardian Guardrails" for alliteration, memorability, and clear value proposition
+- **ADR 001: Name**: Chose "Horizon Guardrails" for alliteration, memorability, and clear value proposition
 - **ADR 002: LLM Strategy**: Use multi-agent consensus (2+ LLMs) to reduce false positives
 - **ADR 003: Mentorship Over Enforcement**: Focus on teaching "why" to build trust with developers
-- **ADR 004: Recursive Self-Enforcement**: Guardian Guardrails must use its own engine to audit itself during development
+- **ADR 004: Recursive Self-Enforcement**: Horizon Guardrails must use its own engine to audit itself during development
 
 ---
 

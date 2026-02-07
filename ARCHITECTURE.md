@@ -259,8 +259,8 @@ Implement these HTTP response headers to protect users from common web attacks:
 1. **Read the Blueprint**: Always check this file before implementing new features.
 2. **Modularize First**: If a file exceeds 200 lines, search for extraction points before adding more code.
 3. **Audit the "Chain"**: When adding a field to the DB, update the Entity -> DTO -> Handler/Query -> API -> Generated Client.
-4. **Guardian Guardrails**: This architecture serves as the foundation for the **Guardian Guardrails** product—a tool that enforces these standards automatically via AI-powered code audits and mentorship.
+4. **Horizon Guardrails**: This architecture serves as the foundation for the **Horizon Guardrails** product—a tool that enforces these standards automatically via AI-powered code audits and mentorship.
 
 ---
 *Created during the Architectural Overhaul of February 2026.*
-*This document powers the Guardian Guardrails enforcement engine.*
+*This document powers the Horizon Guardrails enforcement engine.*
