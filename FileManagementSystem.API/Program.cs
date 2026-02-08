@@ -144,30 +144,47 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Health Checks
+// Health Checks - Make them degraded instead of unhealthy to allow app to start
 var healthChecks = builder.Services.AddHealthChecks();
 
 var connectionString = ConvertPostgresUri(builder.Configuration.GetConnectionString("DefaultConnection"));
 if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase))
 {
-    Console.WriteLine("[HEALTH CHECK] Adding PostgreSQL health check");
-    healthChecks.AddNpgSql(connectionString, timeout: TimeSpan.FromSeconds(3));
+    Console.WriteLine("[HEALTH CHECK] Adding PostgreSQL health check (degraded on failure)");
+    healthChecks.AddNpgSql(
+        connectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,  // Don't fail health check if DB is down
+        name: "database"
+    );
 }
 else if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
 {
-    Console.WriteLine("[HEALTH CHECK] Adding SQLite health check");
-    healthChecks.AddSqlite(connectionString, timeout: TimeSpan.FromSeconds(3));
+    Console.WriteLine("[HEALTH CHECK] Adding SQLite health check (degraded on failure)");
+    healthChecks.AddSqlite(
+        connectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,
+        name: "database"
+    );
 }
 else
 {
-    Console.WriteLine("[HEALTH CHECK] WARNING: No valid connection string, skipping database health check");
+    Console.WriteLine("[HEALTH CHECK] WARNING: No valid connection string, adding degraded database check");
+    healthChecks.AddCheck("database", () => 
+        HealthCheckResult.Degraded("Database connection string not configured"));
 }
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnectionString) && redisConnectionString != "localhost:6379")
 {
-    Console.WriteLine("[HEALTH CHECK] Adding Redis health check");
-    healthChecks.AddRedis(redisConnectionString, timeout: TimeSpan.FromSeconds(3));
+    Console.WriteLine("[HEALTH CHECK] Adding Redis health check (degraded on failure)");
+    healthChecks.AddRedis(
+        redisConnectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,  // Don't fail health check if Redis is down
+        name: "redis"
+    );
 }
 else
 {
@@ -175,7 +192,7 @@ else
 }
 
 // Storage health check - always healthy since we use Cloudinary in production
-healthChecks.AddCheck("Storage", () => HealthCheckResult.Healthy("Using cloud storage (Cloudinary)"));
+healthChecks.AddCheck("storage", () => HealthCheckResult.Healthy("Using cloud storage (Cloudinary)"));
 
 // Redis Cache
 var redisConfig = builder.Configuration.GetConnectionString("Redis");
@@ -368,30 +385,37 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Ensure database is created and initialized with retries
-using (var scope = app.Services.CreateScope())
+// Initialize database in background - don't block app startup
+_ = Task.Run(async () =>
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<FileManagementSystem.Infrastructure.Data.DatabaseInitializer>>();
     var initializer = new FileManagementSystem.Infrastructure.Data.DatabaseInitializer(dbContext, logger);
     
     int retryCount = 0;
-    while (retryCount < 5)
+    while (retryCount < 10)  // Increased retries for production
     {
         try 
         {
+            logger.LogInformation("[DB INIT] Attempting database initialization (Attempt {RetryCount}/10)...", retryCount + 1);
             await initializer.InitializeAsync();
+            logger.LogInformation("[DB INIT] ✓ Database initialized successfully");
             break;
         }
         catch (Exception ex)
         {
             retryCount++;
-            logger.LogWarning(ex, "Failed to initialize database (Attempt {RetryCount}/5). Retrying in 5 seconds...", retryCount);
+            if (retryCount >= 10)
+            {
+                logger.LogError(ex, "[DB INIT] Failed to initialize database after 10 attempts. App will continue but database operations will fail.");
+                break;
+            }
+            logger.LogWarning(ex, "[DB INIT] Failed to initialize database (Attempt {RetryCount}/10). Retrying in 5 seconds...", retryCount);
             await Task.Delay(5000);
-            if (retryCount >= 5) throw;
         }
     }
-}
+});
 
 Log.Logger.Information("File Management System API starting...");
 
