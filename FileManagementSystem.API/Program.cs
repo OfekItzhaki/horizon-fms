@@ -381,6 +381,18 @@ app.UseRouting();
 
 app.MapHealthChecks("/health");
 
+// Diagnostic endpoint to check configuration (only in non-production)
+if (!app.Environment.IsProduction())
+{
+    app.MapGet("/debug/config", () => new
+    {
+        HasDatabaseConnection = !string.IsNullOrEmpty(app.Configuration.GetConnectionString("DefaultConnection")),
+        HasRedisConnection = !string.IsNullOrEmpty(app.Configuration.GetConnectionString("Redis")),
+        HasCloudinaryConfig = !string.IsNullOrEmpty(app.Configuration["CloudinarySettings:CloudName"]),
+        Environment = app.Environment.EnvironmentName
+    });
+}
+
 app.UseAuthorization();
 
 app.MapControllers();
