@@ -17,6 +17,7 @@ public class UploadFileCommandHandlerTests
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly Mock<IStorageService> _storageServiceMock;
     private readonly Mock<IMetadataService> _metadataServiceMock;
+    private readonly Mock<IFilePathResolver> _filePathResolverMock;
     private readonly Mock<ILogger<UploadDestinationResolver>> _destinationResolverLoggerMock;
     private readonly Mock<ILogger<UploadFileCommandHandler>> _loggerMock;
     private readonly UploadDestinationResolver _destinationResolver;
@@ -27,11 +28,14 @@ public class UploadFileCommandHandlerTests
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _storageServiceMock = new Mock<IStorageService>();
         _metadataServiceMock = new Mock<IMetadataService>();
+        _filePathResolverMock = new Mock<IFilePathResolver>();
+        _filePathResolverMock.Setup(r => r.StorageRootPath).Returns("C:\\storage");
         _destinationResolverLoggerMock = new Mock<ILogger<UploadDestinationResolver>>();
         _loggerMock = new Mock<ILogger<UploadFileCommandHandler>>();
         
         _destinationResolver = new UploadDestinationResolver(
             _unitOfWorkMock.Object,
+            _filePathResolverMock.Object,
             _destinationResolverLoggerMock.Object);
         
         _handler = new UploadFileCommandHandler(
@@ -275,6 +279,164 @@ public class UploadFileCommandHandlerTests
         finally
         {
             if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public async Task Handle_WhenStorageReturnsUrl_ShouldSetIsCompressedFalse()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "content");
+            var command = new UploadFileCommand(tempFile, "file.txt");
+            var cloudUrl = "https://res.cloudinary.com/demo/image/upload/v123456789/file.txt";
+            
+            var mockFileRepo = new Mock<IFileRepository>();
+            var mockFolderRepo = new Mock<IFolderRepository>();
+            _unitOfWorkMock.Setup(u => u.Files).Returns(mockFileRepo.Object);
+            _unitOfWorkMock.Setup(u => u.Folders).Returns(mockFolderRepo.Object);
+            
+            mockFileRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<FileItem, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<FileItem>());
+            mockFileRepo.Setup(r => r.GetByHashAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem?)null);
+            mockFileRepo.Setup(r => r.AddAsync(It.IsAny<FileItem>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem item, CancellationToken ct) => item);
+            
+            // Critical: Mock FindAsync for folder lookup in UploadDestinationResolver
+            mockFolderRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Folder, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Folder>());
+            mockFolderRepo.Setup(r => r.GetByPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Folder?)null);
+
+            _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+            
+            _storageServiceMock.Setup(s => s.ComputeHashAsync(tempFile, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new byte[] { 1 });
+            
+            // Mock SaveFileAsync to return a URL
+            _storageServiceMock.Setup(s => s.SaveFileAsync(tempFile, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cloudUrl);
+                
+            var targetFolder = new Folder { Id = Guid.NewGuid(), Path = "C:\\storage\\Default", Name = "Default" };
+            mockFolderRepo.Setup(r => r.GetOrCreateByPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(targetFolder);
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            result.FilePath.Should().Be(cloudUrl);
+            mockFileRepo.Verify(r => r.AddAsync(It.Is<FileItem>(f => f.IsCompressed == false && f.Path == cloudUrl), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public async Task Handle_WhenFileIsEmpty_ShouldSucceed()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllBytes(tempFile, Array.Empty<byte>());
+            var command = new UploadFileCommand(tempFile, "empty.txt");
+            
+            var mockFileRepo = new Mock<IFileRepository>();
+            var mockFolderRepo = new Mock<IFolderRepository>();
+            _unitOfWorkMock.Setup(u => u.Files).Returns(mockFileRepo.Object);
+            _unitOfWorkMock.Setup(u => u.Folders).Returns(mockFolderRepo.Object);
+            
+            mockFileRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<FileItem, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<FileItem>());
+            mockFileRepo.Setup(r => r.GetByHashAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem?)null);
+            mockFileRepo.Setup(r => r.AddAsync(It.IsAny<FileItem>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem item, CancellationToken ct) => item);
+            
+            mockFolderRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Folder, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Folder>());
+            
+            _storageServiceMock.Setup(s => s.ComputeHashAsync(tempFile, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new byte[] { 0 });
+            _storageServiceMock.Setup(s => s.SaveFileAsync(tempFile, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tempFile);
+                
+            var targetFolder = new Folder { Id = Guid.NewGuid(), Path = "C:\\storage\\Default", Name = "Default" };
+            mockFolderRepo.Setup(r => r.GetOrCreateByPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(targetFolder);
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            result.Should().NotBeNull();
+            mockFileRepo.Verify(r => r.AddAsync(It.Is<FileItem>(f => f.Size == 0), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public async Task Handle_WhenFileNameHasSpecialChars_ShouldSucceed()
+    {
+        // Arrange
+        var specialName = "special_chars_!@#$_测试.txt";
+        var tempPath = Path.GetTempPath();
+        var specialFilePath = Path.Combine(tempPath, specialName);
+        var originalTempFile = Path.GetTempFileName();
+        
+        try
+        {
+            File.WriteAllText(originalTempFile, "content");
+            // Create the special file so FileInfo works in the handler
+            File.WriteAllText(specialFilePath, "content");
+            
+            var command = new UploadFileCommand(originalTempFile, specialName);
+            
+            var mockFileRepo = new Mock<IFileRepository>();
+            var mockFolderRepo = new Mock<IFolderRepository>();
+            _unitOfWorkMock.Setup(u => u.Files).Returns(mockFileRepo.Object);
+            _unitOfWorkMock.Setup(u => u.Folders).Returns(mockFolderRepo.Object);
+            
+            mockFileRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<FileItem, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<FileItem>());
+            mockFileRepo.Setup(r => r.GetByHashAsync(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem?)null);
+            mockFileRepo.Setup(r => r.AddAsync(It.IsAny<FileItem>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((FileItem item, CancellationToken ct) => item);
+            
+            mockFolderRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Folder, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Folder>());
+            
+            _storageServiceMock.Setup(s => s.ComputeHashAsync(originalTempFile, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new byte[] { 1 });
+            _storageServiceMock.Setup(s => s.SaveFileAsync(originalTempFile, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(specialFilePath);
+                
+            var targetFolder = new Folder { Id = Guid.NewGuid(), Path = "C:\\storage\\Default", Name = "Default" };
+            mockFolderRepo.Setup(r => r.GetOrCreateByPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(targetFolder);
+
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+
+            // Assert
+            result.FilePath.Should().EndWith(specialName);
+            mockFileRepo.Verify(r => r.AddAsync(It.Is<FileItem>(f => f.FileName == specialName), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            if (File.Exists(originalTempFile)) File.Delete(originalTempFile);
+            if (File.Exists(specialFilePath)) File.Delete(specialFilePath);
         }
     }
 }
