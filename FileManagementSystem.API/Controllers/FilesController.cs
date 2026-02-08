@@ -218,8 +218,6 @@ public class FilesController : ControllerBase
         
         return NoContent();
     }
-}
-
     /// <summary>
     /// Set tags for a file (overwrites existing tags)
     /// </summary>
