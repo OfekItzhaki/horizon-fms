@@ -48,3 +48,9 @@ services:
         sync: false
       - key: CloudinarySettings__IsEnabled
         value: true
+      - key: AllowedOrigins__0
+        value: https://horizon-fms.vercel.app
+      - key: AllowedOrigins__1
+        value: https://horizon-fms.ofeklabs.dev
+      - key: AllowedOrigins__2
+        value: https://*.vercel.app
