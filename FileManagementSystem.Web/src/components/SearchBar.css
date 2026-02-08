@@ -85,6 +85,7 @@
   flex-wrap: nowrap;
   position: relative;
   z-index: 10;
+  margin-left: 1.5rem; /* Add spacing between search bar and filters */
 }
 
 .filter-label {
