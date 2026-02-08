@@ -24,6 +24,10 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
+      - key: PORT
+        value: 10000
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ConnectionStrings__DefaultConnection
