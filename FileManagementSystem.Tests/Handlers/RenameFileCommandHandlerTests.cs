@@ -66,7 +66,8 @@ public class RenameFileCommandHandlerTests
         // Arrange
         var fileId = Guid.NewGuid();
         var file = new FileItem { Id = fileId, Path = "C:\\test\\old.txt" };
-        var command = new RenameFileCommand(fileId, "new<file>.txt");
+        // Use null character which is invalid on all platforms
+        var command = new RenameFileCommand(fileId, "new\0file.txt");
         
         var mockFileRepo = new Mock<IFileRepository>();
         _unitOfWorkMock.Setup(u => u.Files).Returns(mockFileRepo.Object);
