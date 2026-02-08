@@ -4,7 +4,7 @@
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]() [![Tests](https://img.shields.io/badge/tests-33%2F33-success)]() [![.NET](https://img.shields.io/badge/.NET-8.0-blue)]() [![React](https://img.shields.io/badge/React-19-blue)]()
 
-> 🛡️ **This project serves as the reference implementation for [Horizon Guardian](HORIZON_GUARDIAN.md)** - an AI-powered architecture enforcement engine.
+> 🛡️ **This project serves as the reference implementation for the Horizon File Management System.**
 
 ---
 
@@ -25,13 +25,15 @@
 - **🛡️ Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 - **⚡ Rate Limiting**: IP-based rate limiting (100 req/min)
 - **💾 Redis Caching**: Distributed caching for horizontal scaling
+- **☁️ Hybrid Storage**: Pluggable storage providers (Local disk + Cloudinary)
+- **🛡️ Folder Protection**: Atomic protection for critical system folders
 - **🐳 Container-First**: Full Docker Compose mesh (API, Web, Postgres, Seq, Redis)
 
 ---
 
 ## 🏗️ Architecture
 
-This project follows **Clean Architecture** with 8 architectural pillars (see [ARCHITECTURE.md](ARCHITECTURE.md)):
+This project follows **Clean Architecture** with 9 architectural pillars (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 ```
 FileManagementSystem/
@@ -106,25 +108,15 @@ docker-compose up -d
 # Swagger: http://localhost:5000/swagger
 ```
 
-**Services Started:**
-- `horizon-fms-api`: ASP.NET Core API
-- `horizon-fms-web`: React frontend
-- `postgres`: PostgreSQL database
-- `seq`: Structured logging UI
 - `redis`: Distributed cache
 
-### Option 2: Development Mode
+### Helper Scripts (Recommended Workflow)
 
-```bash
-# Terminal 1: Start API
-cd FileManagementSystem.API
-dotnet run
+The project includes smart scripts that simplify development:
 
-# Terminal 2: Start Web
-cd FileManagementSystem.Web
-npm install
-npm run dev
-```
+- **Master Entry Point**: `./dev.ps1` - The unified command for local development. It handles setup (optional), dynamic port allocation, and automated builds to ensure your environment is always up to date.
+- **Conflict-Free Docker**: `./scripts/start-docker.ps1` - (Internal) Automatically detects port conflicts and ramps ports.
+- **Auto-Setup**: `./scripts/setup-dev.ps1` - Configures the local environment, generates certificates, and installs dependencies.
 
 ---
 
@@ -328,8 +320,7 @@ Health checks are Kubernetes-ready for liveness and readiness probes.
 
 ## 📚 Additional Resources
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Complete architectural standards and golden rules
-- **[HORIZON_GUARDIAN.md](HORIZON_GUARDIAN.md)**: Product blueprint for AI-powered architecture enforcement
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Complete architectural standards and golden rules
 - **[Walkthrough](https://github.com/OfekItzhaki/horizon-fms/wiki)**: Detailed implementation walkthrough
 
 ---
@@ -354,7 +345,7 @@ This project is provided as-is for demonstration and educational purposes.
 
 - [ ] Real-time collaboration via Socket.IO
 - [ ] Background job processing with BullMQ
-- [ ] Cloud storage integration (Azure Blob, AWS S3)
+- [x] Cloud storage integration (Cloudinary)
 - [ ] Advanced search with Elasticsearch
 - [ ] Image editing capabilities
 - [ ] Mobile app (React Native)
@@ -363,5 +354,3 @@ This project is provided as-is for demonstration and educational purposes.
 ---
 
 **Built with ❤️ using Clean Architecture and Industrial-Grade Standards**
-
-*This project powers the [Horizon Guardian](HORIZON_GUARDIAN.md) enforcement engine.*
