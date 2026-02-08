@@ -20,6 +20,7 @@ services:
     plan: free
     region: oregon
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # Allow all IPs (empty list = no restrictions)
 
   # .NET API Service
   - type: web
