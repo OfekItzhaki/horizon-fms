@@ -1,8 +1,8 @@
 {
   "framework": "vite",
-  "buildCommand": "npm install && npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "buildCommand": "cd FileManagementSystem.Web && npm install && npm run build",
+  "outputDirectory": "FileManagementSystem.Web/dist",
+  "installCommand": "cd FileManagementSystem.Web && npm install",
   "rewrites": [
     {
       "source": "/(.*)",
