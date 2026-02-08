@@ -23,6 +23,7 @@ services:
     dockerfilePath: ./FileManagementSystem.API/Dockerfile
     dockerContext: .
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: PORT
         value: 10000
@@ -47,7 +48,3 @@ services:
         sync: false
       - key: CloudinarySettings__IsEnabled
         value: true
-      - key: Storage__RootPath
-        value: /app/storage
-      - key: ThumbnailSettings__Directory
-        value: /app/storage/thumbnails
