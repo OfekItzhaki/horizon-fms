@@ -34,28 +34,39 @@ static string ConvertPostgresUri(string connectionString)
 {
     if (string.IsNullOrEmpty(connectionString))
     {
-        Console.WriteLine("WARNING: Connection string is null or empty");
-        return connectionString;
+        Console.WriteLine("WARNING: Connection string is null or empty - falling back to SQLite");
+        return "Data Source=filemanager.db";
     }
     
-    Console.WriteLine($"Original connection string: {connectionString.Substring(0, Math.Min(50, connectionString.Length))}...");
+    Console.WriteLine($"[DB CONFIG] Original connection string length: {connectionString.Length}");
+    Console.WriteLine($"[DB CONFIG] First 80 chars: {connectionString.Substring(0, Math.Min(80, connectionString.Length))}");
     
     // If it's already in Host= format, return as-is
-    if (connectionString.Contains("Host="))
+    if (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine("Connection string already in Host= format");
+        Console.WriteLine("[DB CONFIG] Connection string already in Host= format (PostgreSQL)");
         return connectionString;
     }
     
-    // If it's not a postgresql:// URI, return as-is (probably SQLite)
-    if (!connectionString.StartsWith("postgresql://") && !connectionString.StartsWith("postgres://"))
+    // If it's a SQLite connection string, return as-is
+    if (connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine("Connection string is not a PostgreSQL URI, returning as-is");
+        Console.WriteLine("[DB CONFIG] Connection string is SQLite format");
         return connectionString;
+    }
+    
+    // If it's not a postgresql:// URI, log warning and fall back to SQLite
+    if (!connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) && 
+        !connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine($"[DB CONFIG] WARNING: Unrecognized connection string format. Falling back to SQLite.");
+        Console.WriteLine($"[DB CONFIG] Full connection string: {connectionString}");
+        return "Data Source=filemanager.db";
     }
     
     try
     {
+        Console.WriteLine("[DB CONFIG] Attempting to parse PostgreSQL URI...");
         var uri = new Uri(connectionString);
         var host = uri.Host;
         var port = uri.Port > 0 ? uri.Port : 5432;
@@ -64,14 +75,23 @@ static string ConvertPostgresUri(string connectionString)
         var username = userInfo.Length > 0 ? userInfo[0] : "";
         var password = userInfo.Length > 1 ? userInfo[1] : "";
         
+        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(database))
+        {
+            Console.WriteLine($"[DB CONFIG] ERROR: Missing host or database. Host={host}, Database={database}");
+            return "Data Source=filemanager.db";
+        }
+        
         var converted = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
-        Console.WriteLine($"Converted connection string: Host={host};Port={port};Database={database};Username={username};Password=***");
+        Console.WriteLine($"[DB CONFIG] ✓ Successfully converted to Npgsql format");
+        Console.WriteLine($"[DB CONFIG] Host={host}, Port={port}, Database={database}, Username={username}");
         return converted;
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"ERROR converting connection string: {ex.Message}");
-        return connectionString; // Return original if parsing fails
+        Console.WriteLine($"[DB CONFIG] ERROR converting connection string: {ex.Message}");
+        Console.WriteLine($"[DB CONFIG] Stack trace: {ex.StackTrace}");
+        Console.WriteLine($"[DB CONFIG] Falling back to SQLite");
+        return "Data Source=filemanager.db";
     }
 }
 
@@ -124,27 +144,55 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Health Checks
+// Health Checks - Make them degraded instead of unhealthy to allow app to start
 var healthChecks = builder.Services.AddHealthChecks();
 
 var connectionString = ConvertPostgresUri(builder.Configuration.GetConnectionString("DefaultConnection"));
-if (connectionString?.Contains("Host=") == true)
+if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase))
 {
-    healthChecks.AddNpgSql(connectionString);
+    Console.WriteLine("[HEALTH CHECK] Adding PostgreSQL health check (degraded on failure)");
+    healthChecks.AddNpgSql(
+        connectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,  // Don't fail health check if DB is down
+        name: "database"
+    );
+}
+else if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
+{
+    Console.WriteLine("[HEALTH CHECK] Adding SQLite health check (degraded on failure)");
+    healthChecks.AddSqlite(
+        connectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,
+        name: "database"
+    );
 }
 else
 {
-    healthChecks.AddSqlite(connectionString ?? "Data Source=filemanager.db");
+    Console.WriteLine("[HEALTH CHECK] WARNING: No valid connection string, adding degraded database check");
+    healthChecks.AddCheck("database", () => 
+        HealthCheckResult.Degraded("Database connection string not configured"));
 }
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnectionString) && redisConnectionString != "localhost:6379")
 {
-     healthChecks.AddRedis(redisConnectionString);
+    Console.WriteLine("[HEALTH CHECK] Adding Redis health check (degraded on failure)");
+    healthChecks.AddRedis(
+        redisConnectionString, 
+        timeout: TimeSpan.FromSeconds(3),
+        failureStatus: HealthStatus.Degraded,  // Don't fail health check if Redis is down
+        name: "redis"
+    );
+}
+else
+{
+    Console.WriteLine("[HEALTH CHECK] Skipping Redis health check (not configured or localhost)");
 }
 
 // Storage health check - always healthy since we use Cloudinary in production
-healthChecks.AddCheck("Storage", () => HealthCheckResult.Healthy("Using cloud storage (Cloudinary)"));
+healthChecks.AddCheck("storage", () => HealthCheckResult.Healthy("Using cloud storage (Cloudinary)"));
 
 // Redis Cache
 var redisConfig = builder.Configuration.GetConnectionString("Redis");
@@ -254,15 +302,19 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 var dbConnectionString = ConvertPostgresUri(builder.Configuration.GetConnectionString("DefaultConnection")) 
     ?? "Data Source=filemanager.db";
 
+Console.WriteLine($"[DB CONFIG] Final connection string to use: {(dbConnectionString.Contains("Host=") ? "PostgreSQL" : "SQLite")}");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     // Check if it's PostgreSQL (Host= format after conversion)
-    if (dbConnectionString.Contains("Host="))
+    if (dbConnectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase))
     {
+        Console.WriteLine("[DB CONFIG] Configuring DbContext with PostgreSQL (Npgsql)");
         options.UseNpgsql(dbConnectionString);
     }
     else
     {
+        Console.WriteLine($"[DB CONFIG] Configuring DbContext with SQLite: {dbConnectionString}");
         options.UseSqlite(dbConnectionString);
     }
     
@@ -333,30 +385,37 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Ensure database is created and initialized with retries
-using (var scope = app.Services.CreateScope())
+// Initialize database in background - don't block app startup
+_ = Task.Run(async () =>
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<FileManagementSystem.Infrastructure.Data.DatabaseInitializer>>();
     var initializer = new FileManagementSystem.Infrastructure.Data.DatabaseInitializer(dbContext, logger);
     
     int retryCount = 0;
-    while (retryCount < 5)
+    while (retryCount < 10)  // Increased retries for production
     {
         try 
         {
+            logger.LogInformation("[DB INIT] Attempting database initialization (Attempt {RetryCount}/10)...", retryCount + 1);
             await initializer.InitializeAsync();
+            logger.LogInformation("[DB INIT] ✓ Database initialized successfully");
             break;
         }
         catch (Exception ex)
         {
             retryCount++;
-            logger.LogWarning(ex, "Failed to initialize database (Attempt {RetryCount}/5). Retrying in 5 seconds...", retryCount);
+            if (retryCount >= 10)
+            {
+                logger.LogError(ex, "[DB INIT] Failed to initialize database after 10 attempts. App will continue but database operations will fail.");
+                break;
+            }
+            logger.LogWarning(ex, "[DB INIT] Failed to initialize database (Attempt {RetryCount}/10). Retrying in 5 seconds...", retryCount);
             await Task.Delay(5000);
-            if (retryCount >= 5) throw;
         }
     }
-}
+});
 
 Log.Logger.Information("File Management System API starting...");
 

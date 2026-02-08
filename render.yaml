@@ -24,6 +24,11 @@ services:
     dockerContext: .
     healthCheckPath: /health
     autoDeploy: true
+    # IMPORTANT: After deploying, you MUST manually set these environment variables in Render dashboard:
+    # 1. ConnectionStrings__DefaultConnection - Get from your PostgreSQL database "External Database URL"
+    # 2. ConnectionStrings__Redis - Get from your Redis instance connection string
+    # 3. CloudinarySettings__* - Get from your Cloudinary dashboard
+    # See docs/RENDER_DEPLOYMENT.md for detailed instructions
     envVars:
       - key: PORT
         value: 10000
@@ -31,10 +36,11 @@ services:
         value: http://+:10000
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      # Manual connection string - Render's fromDatabase doesn't work reliably
+      # Format: postgresql://user:password@host:port/database
+      # You need to set this manually in Render dashboard after database is created
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: horizon-fms-db
-          property: connectionString
+        sync: false  # Set manually in Render dashboard
       - key: ConnectionStrings__Redis
         fromService:
           type: redis
