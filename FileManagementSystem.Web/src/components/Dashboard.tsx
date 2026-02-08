@@ -1,6 +1,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fileApi, folderApi } from '../services/api';
+import type { FileItemDto } from '../services/api';
 import FileList from './FileList';
 import FolderTree from './FolderTree';
 import SearchBar from './SearchBar';
