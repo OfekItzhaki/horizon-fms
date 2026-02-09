@@ -74,6 +74,75 @@ function getConfig() {
 - **UX Requirement**: Users should never be kicked out due to expired short-lived tokens.
 - **Pattern**: Implement a 401 Interceptor that triggers an automatic renewal (refresh token) and retries the original request seamlessly.
 
+#### JWT Authentication with Refresh Token Rotation
+
+**Token Strategy:**
+- **Access Tokens**: Short-lived (15 minutes), used for API authentication
+- **Refresh Tokens**: Long-lived (30 days), used to obtain new access tokens
+- **Storage**: 
+  - Access tokens: Client-side memory or sessionStorage (never localStorage)
+  - Refresh tokens: HTTP-only, Secure, SameSite cookies
+
+**Implementation Flow:**
+
+1. **Login** (`POST /api/v1/auth/login`):
+   ```
+   User credentials → Server validates → Returns access token + sets refresh token cookie
+   ```
+
+2. **API Requests**:
+   ```
+   Client sends access token in Authorization header → Server validates → Returns data
+   ```
+
+3. **Token Refresh** (`POST /api/v1/auth/refresh`):
+   ```
+   Access token expires → Client calls /refresh → Server validates refresh token →
+   Revokes old refresh token → Issues new access + refresh tokens
+   ```
+
+4. **Logout** (`POST /api/v1/auth/revoke`):
+   ```
+   Client calls /revoke → Server marks refresh token as revoked → Clears cookie
+   ```
+
+**Security Measures:**
+- **Token Rotation**: Each refresh invalidates the previous refresh token
+- **IP Tracking**: Log IP addresses for audit trail
+- **Revocation**: Tokens can be manually revoked (e.g., on logout, password change)
+- **Expiration**: Both token types have strict expiration times
+- **HTTP-Only Cookies**: Refresh tokens are inaccessible to JavaScript (XSS protection)
+
+**Database Schema** (RefreshToken entity):
+```csharp
+- Id: Guid
+- UserId: Guid (FK to User)
+- Token: string (unique, indexed)
+- ExpiresAt: DateTime
+- CreatedAt: DateTime
+- RevokedAt: DateTime? (null = active)
+- CreatedByIp: string
+- RevokedByIp: string?
+- ReplacedByToken: string? (for audit trail)
+```
+
+**Frontend Integration:**
+```typescript
+// Axios interceptor example
+axios.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401 && !error.config._retry) {
+      error.config._retry = true;
+      await axios.post('/api/v1/auth/refresh'); // Refresh token in cookie
+      return axios(error.config); // Retry original request
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+
 ### 6. Universal State & Caching
 - **Standard**: Always use a robust data-fetching library with built-in caching.
 - **Examples**: `@tanstack/react-query` (React), SWR (React), Apollo Client (GraphQL), RTK Query (Redux), etc.
