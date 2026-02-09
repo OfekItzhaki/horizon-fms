@@ -141,7 +141,7 @@ const FolderTree = memo(
 
         {isLoading ? (
           <div className='flex justify-center py-4'>
-            <LoadingSpinner size='sm' color='var(--accent-primary)' />
+            <LoadingSpinner size='sm' color='#4dabf7' />
           </div>
         ) : (
           renderFolders(folders)
