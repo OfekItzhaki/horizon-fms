@@ -34,6 +34,35 @@ These principles apply to **any project** adopting The Horizon Standard:
 - **Rules**: Local dev must be "Plug & Play" with a single helper script that handles setup and service startup.
 - **Applies to**: Any project with multiple services or dependencies.
 
+### 3.1 Environment Variables & Configuration Management
+- **Never Hardcode**: No production URLs, API keys, or environment-specific values in code.
+- **Environment Detection**: Applications must detect their environment (development, staging, production) and fail fast if required configuration is missing.
+- **Validation Pattern**: Validate environment variables at application startup:
+```typescript
+// Example: TypeScript/Node.js
+function getConfig() {
+  const apiUrl = import.meta.env.VITE_API_URL || process.env.API_URL;
+  
+  if (import.meta.env.PROD && !apiUrl) {
+    throw new Error('Production environment detected but API_URL not configured');
+  }
+  
+  return { apiUrl };
+}
+```
+- **`.env.example` Files**: Every project must include `.env.example` with:
+  - All required environment variables
+  - Example values for local development
+  - Comments explaining where to get production values
+  - Clear separation between local/staging/production configs
+- **Deployment Platforms**: Configure environment variables in platform dashboards:
+  - Vercel: Project Settings → Environment Variables
+  - Netlify: Site Settings → Environment Variables
+  - Render: Service → Environment
+  - AWS: Parameter Store, Secrets Manager
+  - Azure: App Configuration, Key Vault
+- **Applies to**: Any application with environment-specific configuration.
+
 ### 4. Background Job & Multi-Channel Delivery
 - **Offloading**: Never perform slow operations (Email, external API sync, heavy processing) in the request-response cycle.
 - **Tools**: Use job queues appropriate for your stack (BullMQ for Node.js, Hangfire for .NET, Celery for Python, etc.).
@@ -67,13 +96,48 @@ These principles apply to **any project** adopting The Horizon Standard:
 - **Persistence Strategy**: All infrastructure data (DB, Cache, Logs) must persist across restarts.
 - **Applies to**: Any production application.
 
+### 8.1 Logging Standards & Sensitive Data Protection
+- **Structured Format**: Use JSON logging with contextual properties:
+```json
+{
+  "timestamp": "2026-02-09T10:30:00Z",
+  "level": "info",
+  "message": "User login successful",
+  "userId": "user-123",
+  "ip": "192.168.1.1",
+  "userAgent": "Mozilla/5.0..."
+}
+```
+- **CRITICAL - Never Log Sensitive Data**:
+  - ❌ **NEVER log**: Passwords, tokens, API keys, session IDs, credit card numbers, SSNs, OTPs, security answers
+  - ❌ **NEVER log**: Full email addresses in production (use hashed or masked versions)
+  - ❌ **NEVER log**: Personal Identifiable Information (PII) without explicit consent and legal basis
+  - ✅ **Safe to log**: User IDs (non-sensitive identifiers), timestamps, IP addresses (with privacy policy), error codes, request paths
+- **Masking Pattern**: If you must log potentially sensitive data for debugging:
+```typescript
+// Bad
+logger.info('User login', { email: user.email, password: password });
+
+// Good
+logger.info('User login', { 
+  userId: user.id, 
+  emailDomain: user.email.split('@')[1] // Only log domain, not full email
+});
+```
+- **Code Review Checklist**: Before committing, search codebase for:
+  - `console.log` statements (remove or replace with proper logger)
+  - Logging of request bodies without sanitization
+  - Debug logs that expose tokens or credentials
+- **Compliance**: Logging sensitive data may violate GDPR, CCPA, HIPAA, and other privacy regulations.
+- **Applies to**: Any application that handles user data.
+
 ### 9. Pluggable Storage Abstraction
 - **Abstraction**: Applications must interact with storage via an interface (e.g., `IStorageService`, `StorageAdapter`) rather than direct filesystem/cloud calls.
 - **Hybrid Support**: The architecture should support multiple providers (Local Disk, S3, Azure Blob, Cloudinary, etc.) switchable via configuration.
 - **Path Resolution**: Use a centralized resolver to handle transitions between relative local paths and absolute production URLs.
 - **Applies to**: Any application handling file storage.
 
-### Ten. Implementation Excellence & Patterns
+### 10. Implementation Excellence & Patterns
 - **Standardized Onboarding**: Complex flows must be broken into discrete, verifiable steps.
 - **Tooling Automation**: Repetitive developer tasks (setup, verification, seeding) MUST be scripted.
 - **Dynamic Infrastructure**: Setup scripts should handle environmental conflicts automatically (port allocation, service health checks, etc.).
@@ -89,30 +153,54 @@ These principles apply to **any project** adopting The Horizon Standard:
 - **Tools**: IDE, Linters (ESLint, Prettier, etc.), CI/CD (GitHub Actions, GitLab CI, Jenkins, etc.).
 - **Rule**: Never merge if formatting checks, linting, or tests fail.
 - **Pre-Commit Checklist**:
-  ```bash
-  # Frontend (TypeScript/React/Vue/etc.)
-  npm run lint          # Check for linting errors
-  npm run lint -- --fix # Auto-fix linting errors
-  npm run build         # Ensure build succeeds
-  
-  # Backend (.NET)
-  dotnet build          # Ensure build succeeds
-  dotnet test           # Run all tests
-  
-  # Backend (Node.js)
-  npm run lint
-  npm run build
-  npm test
-  
-  # Backend (Python)
-  flake8 .              # Linting
-  pytest                # Tests
-  ```
+```bash
+# Frontend (TypeScript/React/Vue/etc.)
+npm run lint          # Check for linting errors
+npm run lint -- --fix # Auto-fix linting errors
+npm run build         # Ensure build succeeds
+
+# Backend (.NET)
+dotnet build          # Ensure build succeeds
+dotnet test           # Run all tests
+
+# Backend (Node.js)
+npm run lint
+npm run build
+npm test
+
+# Backend (Python)
+flake8 .              # Linting
+pytest                # Tests
+```
 
 ### Southern Workflow (Docker & Deploy)
 - **Goal**: Environment parity and deployment reliability.
 - **Rules**: A feature is only "Done" when it passes health checks in the container mesh. All infrastructure MUST be ephemeral-ready.
 - **Applies to**: Any containerized application.
+
+### Automated Pre-Commit Testing
+- **Goal**: Catch errors before they reach CI/CD, ensuring code quality at commit time.
+- **Implementation**: Use Git hooks (Husky) with lint-staged to automatically run tests on changed files.
+- **What Runs Automatically**:
+  - **Linting**: Auto-fix code style issues
+  - **Formatting**: Apply Prettier formatting
+  - **Testing**: Run tests for modified files only (`--findRelatedTests`)
+- **Benefits**:
+  - Prevents broken code from being committed
+  - Catches test failures immediately
+  - Faster feedback loop than waiting for CI/CD
+  - Reduces CI/CD failures and build times
+- **Configuration Example** (package.json):
+```json
+"lint-staged": {
+  "src/**/*.{ts,tsx}": [
+    "prettier --write",
+    "eslint --fix",
+    "npm test -- --bail --findRelatedTests"
+  ]
+}
+```
+- **Applies to**: Any project with automated testing
 
 ---
 
@@ -132,7 +220,7 @@ These principles apply to **any project** adopting The Horizon Standard:
 ### Commit & PR Strategy
 - **Atomic Commits**: Each commit should represent a single logical change. Commits should be kept short and broken into smaller commits by features. If changes are related or dependent, they should be committed together.
 - **Conventional Commits**: Use the `type(scope): description` format
-  - **Types**: 
+  - **Types**:
     - `feat`: New feature
     - `fix`: Bug fix
     - `chore`: Maintenance tasks (dependencies, config)
@@ -143,7 +231,7 @@ These principles apply to **any project** adopting The Horizon Standard:
     - `perf`: Performance improvements
     - `ci`: CI/CD changes
     - `build`: Build system changes
-  - **Examples**: 
+  - **Examples**:
     - `feat(ui): add dark mode support`
     - `fix(api): resolve file upload timeout issue`
     - `chore(deps): update dependencies`
@@ -182,6 +270,368 @@ These principles apply to **any project** adopting The Horizon Standard:
 - **Hotfix Branches**: `hotfix/description` for urgent production fixes
 - **Release Branches**: `release/version` for release preparation
 
+### Branch Protection Rules
+Protect your main branches from accidental or unauthorized changes:
+
+**Main/Master Branch Protection**:
+- ✅ Require pull request reviews before merging (minimum 1 approval)
+- ✅ Require status checks to pass (CI/CD, tests, linting)
+- ✅ Require branches to be up to date before merging
+- ✅ Require conversation resolution before merging
+- ✅ Restrict who can push to matching branches (admins only)
+- ✅ Require signed commits (optional but recommended)
+- ❌ Do not allow force pushes
+- ❌ Do not allow deletions
+
+**Setup Instructions**:
+- **GitHub**: Repository Settings → Branches → Add branch protection rule
+- **GitLab**: Repository Settings → Protected Branches
+- **Bitbucket**: Repository Settings → Branch Permissions
+- **Azure DevOps**: Project Settings → Repositories → Policies
+
+**Recommended Rules**:
+```yaml
+# Example: GitHub branch protection
+branches:
+  main:
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+      required_status_checks:
+        strict: true
+        contexts:
+          - "build"
+          - "test"
+          - "lint"
+      enforce_admins: true
+      restrictions: null
+```
+
+### Git Branch Management
+
+Comprehensive guide for managing branches locally and remotely.
+
+#### Viewing Branches
+```bash
+# List local branches
+git branch
+
+# List remote branches
+git branch -r
+
+# List all branches (local + remote)
+git branch -a
+
+# Show current branch
+git branch --show-current
+
+# Show branches with last commit
+git branch -v
+
+# Show merged branches
+git branch --merged
+
+# Show unmerged branches
+git branch --no-merged
+```
+
+#### Creating & Switching Branches
+```bash
+# Create new branch
+git branch feature/new-feature
+
+# Create and switch to new branch
+git checkout -b feature/new-feature
+
+# Modern syntax (Git 2.23+)
+git switch -c feature/new-feature
+
+# Create branch from specific commit
+git branch feature/new-feature abc123
+
+# Switch to existing branch
+git checkout feature/new-feature
+git switch feature/new-feature  # Modern syntax
+```
+
+#### Renaming Branches
+```bash
+# Rename current branch
+git branch -m new-branch-name
+
+# Rename specific branch
+git branch -m old-name new-name
+
+# Rename and update remote
+git branch -m old-name new-name
+git push origin :old-name new-name
+git push origin -u new-name
+```
+
+#### Deleting Branches
+
+**Local Branches**:
+```bash
+# Delete merged branch (safe)
+git branch -d feature/completed
+
+# Force delete unmerged branch (careful!)
+git branch -D feature/abandoned
+
+# Delete multiple branches
+git branch -d feature/one feature/two feature/three
+```
+
+**Remote Branches**:
+```bash
+# Delete remote branch
+git push origin --delete feature/old-feature
+
+# Alternative syntax
+git push origin :feature/old-feature
+
+# Delete local tracking branch after remote deletion
+git fetch --prune
+git fetch -p  # Short form
+```
+
+#### Cleaning Up Branches
+```bash
+# Remove local branches that no longer exist on remote
+git fetch --prune
+
+# Delete all merged branches except main/master
+git branch --merged | grep -v "\*\|main\|master" | xargs -n 1 git branch -d
+
+# Windows PowerShell version
+git branch --merged | Select-String -NotMatch "\*|main|master" | ForEach-Object { git branch -d $_.ToString().Trim() }
+
+# Interactive cleanup (shows what will be deleted)
+git branch --merged | grep -v "\*\|main\|master"
+```
+
+#### Working with Remote Branches
+```bash
+# Fetch all remote branches
+git fetch --all
+
+# Track remote branch
+git checkout --track origin/feature/remote-feature
+
+# Create local branch from remote
+git checkout -b feature/local-name origin/feature/remote-name
+
+# Push local branch to remote
+git push -u origin feature/new-feature
+
+# Update remote tracking
+git branch -u origin/feature/name
+
+# Show remote tracking branches
+git branch -vv
+```
+
+#### Rollback Strategies
+
+**Revert (Safe - Creates New Commit)**:
+```bash
+# Revert last commit (keeps history)
+git revert HEAD
+
+# Revert specific commit
+git revert abc123
+
+# Revert multiple commits
+git revert abc123..def456
+
+# Revert without committing (stage changes)
+git revert -n HEAD
+```
+
+**Reset (Destructive - Rewrites History)**:
+```bash
+# Soft reset (keep changes staged)
+git reset --soft HEAD~1
+
+# Mixed reset (keep changes unstaged) - DEFAULT
+git reset HEAD~1
+git reset --mixed HEAD~1
+
+# Hard reset (discard all changes) - CAREFUL!
+git reset --hard HEAD~1
+
+# Reset to specific commit
+git reset --hard abc123
+
+# Reset to remote state
+git reset --hard origin/main
+```
+
+**When to Use Each**:
+- **Revert**: When commits are already pushed to shared branches (preserves history)
+- **Reset --soft**: When you want to recommit with different message/changes
+- **Reset --mixed**: When you want to unstage changes but keep them
+- **Reset --hard**: When you want to completely discard changes (use with caution!)
+
+#### Main Branch Protection & Backup
+
+**Before Risky Operations**:
+```bash
+# Create backup branch
+git branch backup/main-$(date +%Y%m%d)
+
+# Or with timestamp
+git branch backup/main-20260209-1030
+
+# Tag important states
+git tag -a v1.0.0-backup -m "Backup before major refactor"
+```
+
+**Recovering from Mistakes**:
+```bash
+# View reflog (history of HEAD movements)
+git reflog
+
+# Restore to previous state
+git reset --hard HEAD@{2}
+
+# Recover deleted branch
+git checkout -b recovered-branch HEAD@{5}
+
+# Restore specific file from history
+git checkout abc123 -- path/to/file.txt
+```
+
+#### Recommended Workflows
+
+**Feature Development Workflow**:
+```bash
+# 1. Start from updated main
+git checkout main
+git pull origin main
+
+# 2. Create feature branch
+git checkout -b feature/new-feature
+
+# 3. Make changes and commit
+git add .
+git commit -m "feat(scope): add new feature"
+
+# 4. Push to remote
+git push -u origin feature/new-feature
+
+# 5. Create pull request (via GitHub/GitLab UI)
+
+# 6. After merge, cleanup
+git checkout main
+git pull origin main
+git branch -d feature/new-feature
+git push origin --delete feature/new-feature
+```
+
+**Hotfix Workflow**:
+```bash
+# 1. Create hotfix from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-bug
+
+# 2. Fix and commit
+git add .
+git commit -m "fix(critical): resolve security issue"
+
+# 3. Push and create PR
+git push -u origin hotfix/critical-bug
+
+# 4. After merge to main, also merge to develop
+git checkout develop
+git merge main
+git push origin develop
+
+# 5. Cleanup
+git branch -d hotfix/critical-bug
+git push origin --delete hotfix/critical-bug
+```
+
+**Syncing Fork with Upstream**:
+```bash
+# 1. Add upstream remote (once)
+git remote add upstream https://github.com/original/repo.git
+
+# 2. Fetch upstream changes
+git fetch upstream
+
+# 3. Merge upstream into your main
+git checkout main
+git merge upstream/main
+
+# 4. Push to your fork
+git push origin main
+```
+
+#### Best Practices
+
+**Branch Naming**:
+- Use descriptive names: `feature/user-authentication` not `feature/fix`
+- Include ticket numbers: `feature/JIRA-123-add-login`
+- Use consistent prefixes: `feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`
+- Use kebab-case: `feature/add-user-profile` not `feature/AddUserProfile`
+
+**Branch Lifecycle**:
+- Keep branches short-lived (days, not weeks)
+- Merge or delete stale branches regularly
+- Rebase feature branches on main frequently to avoid conflicts
+- Delete branches after merging (both local and remote)
+
+**Collaboration**:
+- Never force push to shared branches
+- Communicate before deleting shared branches
+- Use pull requests for code review
+- Keep commits atomic and well-described
+
+#### Useful Git Aliases
+
+Add these to your `~/.gitconfig`:
+```ini
+[alias]
+  # Branch management
+  br = branch
+  co = checkout
+  sw = switch
+  cb = checkout -b
+  
+  # Branch cleanup
+  cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d"
+  prune-all = fetch --prune --all
+  
+  # Branch info
+  branches = branch -a
+  current = branch --show-current
+  recent = branch --sort=-committerdate
+  
+  # Rollback helpers
+  undo = reset --soft HEAD~1
+  unstage = reset HEAD
+  discard = checkout --
+  
+  # History
+  hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+  last = log -1 HEAD --stat
+  
+  # Status shortcuts
+  st = status -sb
+  s = status
+```
+
+**Usage**:
+```bash
+git cb feature/new-feature  # Create and checkout
+git recent                  # Show recent branches
+git cleanup                 # Delete merged branches
+git undo                    # Undo last commit (keep changes)
+```
+
 ---
 
 ## 🛡️ Security & Performance Standards
@@ -206,8 +656,28 @@ Every project must implement:
 - **Dependencies**: Regularly update dependencies and scan for vulnerabilities
 - **Logging**: Never log sensitive data (passwords, tokens, PII)
 
+### CAPTCHA & Bot Protection
+- **Purpose**: Prevent automated abuse, spam, and bot attacks on public endpoints.
+- **Recommended Solution**: Cloudflare Turnstile (privacy-friendly, no visual puzzles for most users).
+- **Implementation Pattern**:
+  - **Frontend**: Include CAPTCHA widget on sensitive forms (login, registration, password reset).
+  - **Backend**: Verify CAPTCHA token on server-side before processing requests.
+  - **Graceful Degradation**: If CAPTCHA service is unavailable, log errors but don't block legitimate users (or implement fallback rate limiting).
+- **Development vs Production**:
+  - **Development**: Use test keys that always pass validation (e.g., Cloudflare's `1x00000000000000000000AA`).
+  - **Production**: Use real keys from CAPTCHA provider dashboard.
+- **Configuration**:
+  - Frontend: `VITE_TURNSTILE_SITE_KEY` or equivalent (public key, safe to expose).
+  - Backend: `TURNSTILE_SECRET_KEY` or equivalent (private key, never expose).
+- **Best Practices**:
+  - Only apply CAPTCHA to high-risk endpoints (login, registration, contact forms).
+  - Don't apply CAPTCHA to every API call (degrades UX).
+  - Combine with rate limiting for defense in depth.
+  - Monitor CAPTCHA solve rates to detect issues.
+- **Applies to**: Any application with public-facing forms or authentication endpoints.
+
 ### Performance Standards
-- **Response Times**: 
+- **Response Times**:
   - API endpoints: < 200ms for simple queries, < 1s for complex operations
   - Page load: < 3s for initial load, < 1s for subsequent navigation
 - **Caching**: Implement appropriate caching strategies
@@ -215,45 +685,6 @@ Every project must implement:
 - **Assets**: Minify and compress static assets, use CDN
 - **Lazy Loading**: Load resources on-demand when appropriate
 - **Monitoring**: Track performance metrics and set up alerts
-
----
-
-## ⚙️ Configuration Management
-
-### API URL Configuration Pattern
-
-Always split API URLs into configurable components for maximum flexibility and clarity:
-
-**Backend Configuration:**
-```bash
-API_BASE_PATH=/api          # API route prefix
-API_VERSION=v1              # Version identifier
-# Results in: /api/v1
-```
-
-**Frontend Configuration:**
-```bash
-VITE_API_BASE_URL=https://api.example.com    # Domain only (no trailing slash)
-VITE_API_BASE_PATH=/api                      # API route prefix
-VITE_API_VERSION=v1                          # Version identifier
-# Results in: https://api.example.com/api/v1
-```
-
-**Benefits:**
-- **Separation of Concerns**: Domain, routing, and versioning are independent
-- **Flexibility**: Easy to change API versions (v1 → v2) without touching URLs
-- **Clarity**: Makes configuration obvious and self-documenting
-- **Reusability**: Same base URL can serve multiple API versions or services
-
-**Implementation Example (Frontend):**
-```typescript
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5295';
-const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || '/api';
-const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
-const API_URL = `${API_BASE_URL}${API_BASE_PATH}/${API_VERSION}`;
-```
-
-**Applies to**: Any API-driven application with versioning requirements.
 
 ---
 
@@ -332,7 +763,7 @@ Projects should document project-specific ADRs separately. **The Horizon Standar
   - Use for: Social networks, recommendation engines, knowledge graphs
 
 ### Observability Stack
-- **Logging**: 
+- **Logging**:
   - Structured logging (JSON format with context)
   - Tools: Seq, ELK Stack (Elasticsearch, Logstash, Kibana), Datadog, Splunk, CloudWatch
 - **Metrics**: Prometheus, Grafana, Application Insights, New Relic
@@ -483,7 +914,7 @@ Projects should document project-specific ADRs separately. **The Horizon Standar
 
 ### During Development
 1. **Follow Patterns**: Use existing code patterns as reference - consistency is key
-2. **Type Everything**: 
+2. **Type Everything**:
    - TypeScript: No `any` types - use proper types
    - Python: Use type hints
    - C#: Use strong typing
@@ -497,6 +928,7 @@ Projects should document project-specific ADRs separately. **The Horizon Standar
 7. **Security First**: Never commit secrets, always validate inputs, follow security best practices
 
 ### Before Committing
+
 **CRITICAL**: Always run these checks before committing:
 
 #### Frontend (JavaScript/TypeScript)
@@ -604,176 +1036,6 @@ A feature or task is only considered "Done" when ALL of the following are met:
 - ✅ Code reviewed by at least one other developer (if team project)
 - ✅ All review comments addressed
 - ✅ Approved for merge
-
----
-
-## 🚀 Deployment & Production
-
-### Deployment Principles
-- **Infrastructure as Code**: All infrastructure should be defined in code (Docker Compose, Kubernetes manifests, Terraform, etc.)
-- **Environment Parity**: Development, staging, and production should be as similar as possible
-- **Automated Deployments**: Use CI/CD pipelines for consistent, repeatable deployments
-- **Zero-Downtime Deployments**: Implement blue-green or rolling deployments
-- **Rollback Strategy**: Always have a plan to quickly rollback failed deployments
-
-### Deployment Platforms
-
-#### Platform-as-a-Service (PaaS)
-- **Render**: Docker-based deployments, managed databases, auto-scaling
-- **Vercel**: Optimized for frontend frameworks (React, Next.js, Vue, etc.)
-- **Netlify**: Static sites and serverless functions
-- **Heroku**: Classic PaaS, easy to use
-- **Railway**: Modern PaaS with great DX
-- **Fly.io**: Global edge deployment
-
-#### Cloud Providers
-- **AWS**: ECS/Fargate, Lambda, S3, RDS, ElastiCache
-- **Azure**: App Service, Functions, Blob Storage, SQL Database
-- **Google Cloud**: Cloud Run, Cloud Functions, Cloud Storage, Cloud SQL
-- **DigitalOcean**: App Platform, Droplets, Managed Databases
-
-#### Container Orchestration
-- **Kubernetes**: Production-grade orchestration for complex applications
-- **Docker Swarm**: Simpler alternative to Kubernetes
-- **Nomad**: Flexible workload orchestrator
-
-### Deployment Checklist
-
-#### Pre-Deployment
-- ✅ All tests passing (unit, integration, E2E)
-- ✅ Code reviewed and approved
-- ✅ Security scan completed (dependencies, code)
-- ✅ Performance testing completed
-- ✅ Database migrations tested
-- ✅ Environment variables documented
-- ✅ Rollback plan documented
-
-#### Deployment
-- ✅ Database migrations run successfully
-- ✅ Health checks passing
-- ✅ Smoke tests passing
-- ✅ Monitoring and alerts configured
-- ✅ Logs flowing to aggregation service
-- ✅ SSL/TLS certificates valid
-
-#### Post-Deployment
-- ✅ Monitor error rates and performance
-- ✅ Verify critical user flows
-- ✅ Check resource utilization
-- ✅ Review logs for errors
-- ✅ Update documentation
-- ✅ Notify team of deployment
-
-### Environment Configuration
-
-#### Development
-- Local Docker Compose setup
-- Hot reload enabled
-- Debug logging
-- Mock external services (optional)
-- Seed data for testing
-
-#### Staging
-- Production-like environment
-- Real external services (test accounts)
-- Automated deployments from develop branch
-- Used for QA and integration testing
-
-#### Production
-- High availability configuration
-- Auto-scaling enabled
-- Production credentials
-- Automated deployments from main branch
-- Monitoring and alerting active
-
-### Secrets Management
-- **Never commit secrets** to version control
-- Use environment variables for configuration
-- Use secret management services:
-  - **AWS**: Secrets Manager, Parameter Store
-  - **Azure**: Key Vault
-  - **Google Cloud**: Secret Manager
-  - **HashiCorp Vault**: Universal secret management
-  - **Doppler**: Modern secrets management
-- Rotate secrets regularly
-- Use different secrets for each environment
-
-### Monitoring & Observability
-
-#### Application Monitoring
-- **APM Tools**: New Relic, Datadog, Application Insights
-- **Error Tracking**: Sentry, Rollbar, Bugsnag
-- **Uptime Monitoring**: UptimeRobot, Pingdom, StatusCake
-
-#### Infrastructure Monitoring
-- **Metrics**: Prometheus + Grafana, CloudWatch, Azure Monitor
-- **Logs**: ELK Stack, Seq, Datadog, Splunk
-- **Tracing**: Jaeger, Zipkin, OpenTelemetry
-
-#### Key Metrics to Monitor
-- **Response Times**: P50, P95, P99 latency
-- **Error Rates**: 4xx and 5xx responses
-- **Throughput**: Requests per second
-- **Resource Usage**: CPU, memory, disk, network
-- **Database**: Query performance, connection pool
-- **Cache**: Hit rate, eviction rate
-
-### Disaster Recovery
-
-#### Backup Strategy
-- **Database**: Daily automated backups, point-in-time recovery
-- **Files**: Replicate to multiple regions (S3, Azure Blob)
-- **Configuration**: Version controlled, backed up
-- **Retention**: 30 days minimum, longer for compliance
-
-#### Recovery Procedures
-- Document recovery time objective (RTO)
-- Document recovery point objective (RPO)
-- Test recovery procedures regularly
-- Maintain runbooks for common incidents
-
-### Performance Optimization
-
-#### Backend
-- Use caching aggressively (Redis, in-memory)
-- Optimize database queries (indexes, query plans)
-- Implement connection pooling
-- Use async/await for I/O operations
-- Enable compression (gzip, brotli)
-
-#### Frontend
-- Code splitting and lazy loading
-- Optimize images (WebP, compression)
-- Use CDN for static assets
-- Implement service workers for offline support
-- Minimize bundle size
-
-#### Database
-- Add indexes for frequently queried columns
-- Use read replicas for read-heavy workloads
-- Implement query caching
-- Partition large tables
-- Regular maintenance (VACUUM, ANALYZE)
-
-### Cost Optimization
-
-#### Compute
-- Right-size instances (don't over-provision)
-- Use auto-scaling to match demand
-- Use spot/preemptible instances for non-critical workloads
-- Shut down non-production environments when not in use
-
-#### Storage
-- Use appropriate storage tiers (hot, cool, archive)
-- Implement lifecycle policies for old data
-- Compress data where possible
-- Delete unused resources
-
-#### Monitoring
-- Set up billing alerts
-- Review cost reports regularly
-- Use cost allocation tags
-- Optimize data transfer costs
 
 ---
 

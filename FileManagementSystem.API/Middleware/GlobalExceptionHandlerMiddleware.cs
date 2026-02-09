@@ -31,7 +31,19 @@ public class GlobalExceptionHandlerMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception: {Message}", ex.Message);
+            // Enhanced logging for diagnostics
+            _logger.LogError(ex, "Unhandled exception in API: {ExceptionType} - {Message}", ex.GetType().Name, ex.Message);
+            
+            if (ex is ValidationException valEx)
+            {
+                var errors = string.Join("; ", valEx.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+                _logger.LogWarning("Validation failure details: {Errors}", errors);
+            }
+            else if (ex is DomainException domainEx)
+            {
+                _logger.LogWarning("Domain exception details: {Message}", domainEx.Message);
+            }
+            
             await HandleExceptionAsync(context, ex);
         }
     }

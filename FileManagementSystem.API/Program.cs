@@ -128,6 +128,11 @@ builder.Services.AddApiVersioning(options =>
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("x-api-version"),
+        new QueryStringApiVersionReader("api-version")
+    );
 })
 .AddApiExplorer(options =>
 {
@@ -278,12 +283,12 @@ builder.Services.AddScoped<IFilePathResolver>(sp =>
     var windsorContainer = sp.GetRequiredService<IWindsorContainer>();
     return windsorContainer.Resolve<IFilePathResolver>();
 });
-builder.Services.AddSingleton<IAuthenticationService>(sp => 
+builder.Services.AddScoped<IAuthenticationService>(sp => 
 {
     var windsorContainer = sp.GetRequiredService<IWindsorContainer>();
     return windsorContainer.Resolve<IAuthenticationService>();
 });
-builder.Services.AddSingleton<IAuthorizationService>(sp => 
+builder.Services.AddScoped<IAuthorizationService>(sp => 
 {
     var windsorContainer = sp.GetRequiredService<IWindsorContainer>();
     return windsorContainer.Resolve<IAuthorizationService>();

@@ -15,7 +15,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IConfiguration _configuration;
-    private static Guid? _currentUserId;
+    private Guid? _currentUserId;
     
     public AuthenticationService(
         IServiceScopeFactory scopeFactory,

@@ -192,7 +192,7 @@ public class WindsorInstaller : IWindsorInstaller
                 .LifestyleSingleton()
         );
 
-        // Authentication/Authorization - Singleton (used by pipeline behaviors)
+        // Authentication/Authorization - Scoped (managed by middleware)
         container.Register(
             Component.For<IAuthenticationService>()
                 .ImplementedBy<AuthenticationService>()
@@ -200,11 +200,11 @@ public class WindsorInstaller : IWindsorInstaller
                     Dependency.OnValue<IConfiguration>(_configuration)
                     // ILogger<AuthenticationService> will be auto-wired by Castle Windsor
                 )
-                .LifestyleSingleton(),
+                .LifestyleScoped(),
             Component.For<IAuthorizationService>()
                 .ImplementedBy<AuthorizationService>()
                 // ILogger<AuthorizationService> and IServiceScopeFactory will be auto-wired by Castle Windsor
-                .LifestyleSingleton()
+                .LifestyleScoped()
         );
 
         // MediatR, handlers, pipeline behaviors, and validators are registered in Program.cs

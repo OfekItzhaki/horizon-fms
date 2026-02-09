@@ -11,6 +11,30 @@ const apiClient = axios.create({
   },
 });
 
+// Add a response interceptor for debugging 400 errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('API Error Response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers,
+        url: error.config?.url,
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('API No Response:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('API Error Message:', error.message);
+    }
+    return Promise.reject(error);
+  },
+);
+
 // Re-export types for convenience
 export type { FileItemDto, FolderDto, SearchFilesResult, GetFoldersResult };
 
