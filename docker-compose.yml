@@ -61,10 +61,8 @@ services:
       - Storage__RootPath=/app/storage
       - ThumbnailSettings__Directory=/app/storage/thumbnails
       - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=horizon_fms;Username=horizon_user;Password=horizon_password;
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=horizon_fms;Username=horizon_user;Password=horizon_password;
-      - SEQ_URL=http://seq:5341
-      - REDIS_CONNECTION=redis:6379
+      - ConnectionStrings__Redis=redis:6379
+      - Serilog__SeqServerUrl=http://seq:80
       - CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME}
       - CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY}
       - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}

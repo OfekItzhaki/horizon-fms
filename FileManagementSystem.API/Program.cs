@@ -99,8 +99,17 @@ static string ConvertPostgresUri(string connectionString)
 var loggerConfiguration = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.File("logs/api.log", rollingInterval: RollingInterval.Day)
-    .WriteTo.Console();
+    .WriteTo.File("logs/api.log", rollingInterval: RollingInterval.Day);
+
+// Use JSON formatting for production console logs (Horizon Pillar 8)
+if (builder.Environment.IsProduction())
+{
+    loggerConfiguration.WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter());
+}
+else
+{
+    loggerConfiguration.WriteTo.Console();
+}
 
 var seqUrl = builder.Configuration["Serilog:SeqServerUrl"];
 if (!string.IsNullOrEmpty(seqUrl))
@@ -342,6 +351,28 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<FileManagementSystem.Application.Services.UploadDestinationResolver>();
 builder.Services.AddScoped<FileManagementSystem.Application.Services.FolderPathService>();
 
+// JWT Authentication
+var jwtSecret = builder.Configuration["JWT_SECRET"] ?? "your_super_secret_key_at_least_32_chars_long_horizon_fms_2026";
+var jwtIssuer = builder.Configuration["JWT_ISSUER"] ?? "FileManagementSystem";
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"] ?? "FileManagementSystem";
+
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
 var app = builder.Build();
 
 // Register IServiceProvider in Windsor so it can resolve ASP.NET Core services (like ILogger<>)
@@ -357,6 +388,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Enforce HTTPS in production (Horizon Security Standard)
+    app.UseHsts();
 }
 
 app.UseCors("AllowReactApp");
@@ -383,8 +419,6 @@ app.Use(async (context, next) =>
 // Rate Limiting
 app.UseIpRateLimiting();
 
-app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseHttpsRedirection();
 
 // Windsor scope middleware - must be early in pipeline to create scope for request
@@ -394,6 +428,9 @@ app.UseMiddleware<FileManagementSystem.API.Middleware.WindsorScopeMiddleware>();
 app.UseMiddleware<FileManagementSystem.API.Middleware.GlobalExceptionHandlerMiddleware>();
 
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 
@@ -408,8 +445,6 @@ if (!app.Environment.IsProduction())
         Environment = app.Environment.EnvironmentName
     });
 }
-
-app.UseAuthorization();
 
 app.MapControllers();
 

@@ -1,8 +1,12 @@
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using FileManagementSystem.Application.Interfaces;
 using FileManagementSystem.Infrastructure.Data;
 using FileManagementSystem.Domain.Entities;
@@ -60,23 +64,62 @@ public class AuthenticationService : IAuthenticationService
     
     public Task<string> GenerateTokenAsync(string username, CancellationToken cancellationToken = default)
     {
-        // For desktop app, use simple token generation
-        // In production, use JWT or similar
-        var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{DateTime.UtcNow:O}"));
-        return Task.FromResult(token);
+        var jwtSecret = _configuration["JWT_SECRET"] ?? "your_super_secret_key_at_least_32_chars_long_horizon_fms_2026";
+        var jwtIssuer = _configuration["JWT_ISSUER"] ?? "FileManagementSystem";
+        var jwtAudience = _configuration["JWT_AUDIENCE"] ?? "FileManagementSystem";
+        
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new Claim(ClaimTypes.Name, username)
+        };
+        
+        var token = new JwtSecurityToken(
+            issuer: jwtIssuer,
+            audience: jwtAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: credentials
+        );
+        
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        _logger.LogInformation("JWT token generated for user: {Username}", username);
+        
+        return Task.FromResult(tokenString);
     }
     
     public Task<bool> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
     {
-        // Simple validation for desktop app
-        // In production, validate JWT properly
         try
         {
-            var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(token));
-            return Task.FromResult(decoded.Contains(':'));
+            var jwtSecret = _configuration["JWT_SECRET"] ?? "your_super_secret_key_at_least_32_chars_long_horizon_fms_2026";
+            var jwtIssuer = _configuration["JWT_ISSUER"] ?? "FileManagementSystem";
+            var jwtAudience = _configuration["JWT_AUDIENCE"] ?? "FileManagementSystem";
+            
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+                ClockSkew = TimeSpan.Zero
+            };
+            
+            tokenHandler.ValidateToken(token, validationParameters, out _);
+            return Task.FromResult(true);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "JWT token validation failed");
             return Task.FromResult(false);
         }
     }
