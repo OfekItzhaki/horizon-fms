@@ -161,6 +161,9 @@ var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings_
 Console.WriteLine($"[DB CONFIG] Connection string from ENV: {(string.IsNullOrEmpty(envConnectionString) ? "NULL OR EMPTY" : $"Length={envConnectionString.Length}, First 80 chars={envConnectionString.Substring(0, Math.Min(80, envConnectionString.Length))}")}");
 
 var connectionString = ConvertPostgresUri(rawConnectionString);
+// CRITICAL: Synchronize the converted connection string back into configuration
+// so WindsorInstaller and other components use the correct format.
+builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
 if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase))
 {
     Console.WriteLine("[HEALTH CHECK] Adding PostgreSQL health check (degraded on failure)");
