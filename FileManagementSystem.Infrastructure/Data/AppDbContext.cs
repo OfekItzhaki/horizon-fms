@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<FileItem> FileItems { get; set; } = null!;
     public DbSet<Folder> Folders { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +97,25 @@ public class AppDbContext : DbContext
                     (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
                     c => c != null ? c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())) : 0,
                     c => c != null ? c.ToList() : new List<string>()));
+        });
+        
+        // RefreshToken configuration
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.CreatedByIp).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.RevokedByIp).HasMaxLength(50);
+            entity.Property(e => e.ReplacedByToken).HasMaxLength(500);
+            
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

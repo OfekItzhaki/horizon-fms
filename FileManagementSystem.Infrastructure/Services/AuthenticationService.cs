@@ -1,5 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -83,14 +84,99 @@ public class AuthenticationService : IAuthenticationService
             issuer: jwtIssuer,
             audience: jwtAudience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(24),
+            expires: DateTime.UtcNow.AddMinutes(15), // Short-lived access token
             signingCredentials: credentials
         );
         
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        _logger.LogInformation("JWT token generated for user: {Username}", username);
+        _logger.LogInformation("JWT access token generated for user: {Username}", username);
         
         return Task.FromResult(tokenString);
+    }
+    
+    public async Task<AuthTokens> GenerateTokensAsync(string username, string ipAddress, CancellationToken cancellationToken = default)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+        if (user == null)
+        {
+            throw new InvalidOperationException($"User not found: {username}");
+        }
+        
+        // Generate access token
+        var accessToken = await GenerateTokenAsync(username, cancellationToken);
+        
+        // Generate refresh token
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Token = GenerateRefreshTokenString(),
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            CreatedByIp = ipAddress
+        };
+        
+        context.RefreshTokens.Add(refreshToken);
+        await context.SaveChangesAsync(cancellationToken);
+        
+        _logger.LogInformation("Generated access and refresh tokens for user: {Username}", username);
+        
+        return new AuthTokens(accessToken, refreshToken.Token);
+    }
+    
+    public async Task<AuthTokens?> RefreshTokenAsync(string refreshToken, string ipAddress, CancellationToken cancellationToken = default)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        var token = await context.RefreshTokens
+            .Include(rt => rt.User)
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken, cancellationToken);
+        
+        if (token == null || !token.IsActive)
+        {
+            _logger.LogWarning("Refresh token is invalid or inactive");
+            return null;
+        }
+        
+        // Revoke old token and replace with new one
+        token.RevokedAt = DateTime.UtcNow;
+        token.RevokedByIp = ipAddress;
+        
+        var newTokens = await GenerateTokensAsync(token.User.Username, ipAddress, cancellationToken);
+        
+        // Store the replacement token reference
+        token.ReplacedByToken = newTokens.RefreshToken;
+        await context.SaveChangesAsync(cancellationToken);
+        
+        _logger.LogInformation("Refresh token rotated for user: {Username}", token.User.Username);
+        
+        return newTokens;
+    }
+    
+    public async Task<bool> RevokeTokenAsync(string refreshToken, string ipAddress, CancellationToken cancellationToken = default)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        var token = await context.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken, cancellationToken);
+        
+        if (token == null || !token.IsActive)
+        {
+            return false;
+        }
+        
+        token.RevokedAt = DateTime.UtcNow;
+        token.RevokedByIp = ipAddress;
+        await context.SaveChangesAsync(cancellationToken);
+        
+        _logger.LogInformation("Refresh token revoked for user: {UserId}", token.UserId);
+        
+        return true;
     }
     
     public Task<bool> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -138,6 +224,12 @@ public class AuthenticationService : IAuthenticationService
         using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, 10000, HashAlgorithmName.SHA256);
         var hash = pbkdf2.GetBytes(32);
         return Convert.ToBase64String(hash);
+    }
+    
+    private static string GenerateRefreshTokenString()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
     }
     
     public static string GenerateSalt()
