@@ -76,9 +76,25 @@ const FileTableRow = memo(
       }
     };
 
-    const handleView = () => {
+
+    const handleOpenInBrowser = () => {
       setIsDropdownOpen(false);
       onOpen(file);
+    };
+
+    const handleDownload = async () => {
+      setIsDropdownOpen(false);
+      try {
+        const downloadUrl = await fileApi.downloadFile(file.id!);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        toast.error('Failed to download file');
+      }
     };
 
     const handleDeleteClick = () => {
@@ -134,35 +150,62 @@ const FileTableRow = memo(
             </button>
             <div className='relative' ref={dropdownRef}>
               <button
-                className='p-1.5 rounded hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] transition-colors'
+                className={`p-2 rounded-xl transition-all duration-200 ${isDropdownOpen ? 'bg-[var(--accent-primary)] text-white' : 'hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)]'}`}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 title='More actions'
               >
-                <MoreVertical size={16} />
+                <MoreVertical size={18} />
               </button>
               {isDropdownOpen && (
-                <div className='absolute right-0 mt-1 w-40 bg-[var(--surface-primary)] border border-[var(--border-color)] rounded-lg shadow-lg z-10 overflow-hidden'>
+                <div className='absolute right-0 mt-2 w-56 bg-[var(--surface-primary)] border border-[var(--border-color)] rounded-2xl shadow-2xl z-20 py-2 animate-in fade-in zoom-in duration-200'>
+                  <div className='px-4 py-2 mb-1 border-b border-[var(--border-color)]'>
+                    <p className='text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest'>File Actions</p>
+                  </div>
                   <button
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] flex items-center gap-2 transition-colors'
-                    onClick={handleView}
+                    className='w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] flex items-center justify-between group transition-colors'
+                    onClick={handleOpenInBrowser}
                   >
-                    <Eye size={14} />
-                    View
+                    <div className='flex items-center gap-3'>
+                      <div className='p-1.5 rounded-lg bg-blue-500/10 text-blue-500'>
+                        <ExternalLink size={16} />
+                      </div>
+                      <span className='font-medium'>Open in Browser</span>
+                    </div>
                   </button>
                   <button
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] flex items-center gap-2 transition-colors'
+                    className='w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] flex items-center justify-between group transition-colors'
+                    onClick={handleDownload}
+                  >
+                    <div className='flex items-center gap-3'>
+                      <div className='p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500'>
+                        <Eye size={16} />
+                      </div>
+                      <span className='font-medium'>Download / View</span>
+                    </div>
+                  </button>
+                  <button
+                    className='w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] flex items-center justify-between group transition-colors'
                     onClick={handleRename}
                   >
-                    <Edit2 size={14} />
-                    Rename
+                    <div className='flex items-center gap-3'>
+                      <div className='p-1.5 rounded-lg bg-amber-500/10 text-amber-500'>
+                        <Edit2 size={16} />
+                      </div>
+                      <span className='font-medium'>Rename</span>
+                    </div>
                   </button>
+                  <div className='my-1 border-t border-[var(--border-color)]'></div>
                   <button
-                    className='w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-500 flex items-center gap-2 transition-colors disabled:opacity-50'
+                    className='w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-500 flex items-center justify-between group transition-colors disabled:opacity-50'
                     onClick={handleDeleteClick}
                     disabled={isDeleting}
                   >
-                    <Trash2 size={14} />
-                    Delete
+                    <div className='flex items-center gap-3'>
+                      <div className='p-1.5 rounded-lg bg-red-500/10 text-red-500'>
+                        <Trash2 size={16} />
+                      </div>
+                      <span className='font-medium'>Delete</span>
+                    </div>
                   </button>
                 </div>
               )}
