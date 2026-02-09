@@ -142,7 +142,7 @@ const Dashboard = () => {
       return true;
     }) || [];
 
-  const { data: foldersData } = useQuery({
+  const { data: foldersData, isLoading: foldersLoading } = useQuery({
     queryKey: ['folders'],
     queryFn: () => folderApi.getFolders(),
   });
@@ -173,6 +173,7 @@ const Dashboard = () => {
             folders={foldersData?.folders || []}
             onFolderSelect={handleFolderSelect}
             selectedFolderId={selectedFolderId}
+            isLoading={foldersLoading}
           />
         </aside>
 

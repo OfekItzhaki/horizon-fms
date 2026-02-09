@@ -5,6 +5,7 @@ import { Edit2, ExternalLink, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { fileApi } from '../services/api';
 import type { FileItemDto } from '../types';
 import TagEditor from './TagEditor';
+import { LoadingSpinner } from './LoadingSpinner';
 import './FileList.css';
 
 interface FileListProps {
@@ -222,8 +223,8 @@ const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
   if (isLoading) {
     return (
       <div className='loading-container flex flex-col items-center justify-center py-12 text-[var(--text-tertiary)]'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mb-4'></div>
-        Loading files...
+        <LoadingSpinner size='lg' color='var(--accent-primary)' />
+        <span className='mt-4'>Loading files...</span>
       </div>
     );
   }
