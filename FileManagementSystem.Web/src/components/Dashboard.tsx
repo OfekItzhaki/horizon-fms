@@ -19,6 +19,7 @@ const DashboardHeader = memo(
     onPhotoOnlyChange,
     isDocumentOnly,
     onDocumentOnlyChange,
+    onToggleSidebar,
   }: {
     searchTerm: string;
     onSearchChange: (term: string) => void;
@@ -26,24 +27,22 @@ const DashboardHeader = memo(
     onPhotoOnlyChange: (value: boolean) => void;
     isDocumentOnly: boolean;
     onDocumentOnlyChange: (value: boolean) => void;
+    onToggleSidebar: () => void;
   }) => (
     <header className='dashboard-header'>
       <div className='dashboard-header-overlay'></div>
       <div className='dashboard-header-content'>
-        <h1
-          style={{
-            margin: '0 0 1rem 0',
-            fontSize: '2rem',
-            fontWeight: '800',
-            color: '#ffffff',
-            letterSpacing: '-0.03em',
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3)',
-            fontFamily:
-              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          }}
-        >
-          File Management System
-        </h1>
+        <div className='dashboard-header-top'>
+          <button className='mobile-menu-btn' onClick={onToggleSidebar} aria-label='Toggle Menu'>
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1 className='dashboard-title'>File Management System</h1>
+          <div className='header-actions ml-auto flex items-center gap-4'>
+            <ThemeToggle />
+          </div>
+        </div>
         <div className='flex items-center gap-4 w-full'>
           <SearchBar
             searchTerm={searchTerm}
@@ -53,25 +52,23 @@ const DashboardHeader = memo(
             isDocumentOnly={isDocumentOnly}
             onDocumentOnlyChange={onDocumentOnlyChange}
           />
-          <ThemeToggle />
         </div>
       </div>
     </header>
   ),
   (prevProps, nextProps) => {
-    // Custom comparison: return true if props are equal (don't re-render)
-    // We ignore searchTerm changes - only re-render if filters or callbacks change
     const filtersEqual =
       prevProps.isPhotoOnly === nextProps.isPhotoOnly &&
       prevProps.isDocumentOnly === nextProps.isDocumentOnly;
     const callbacksEqual =
       prevProps.onSearchChange === nextProps.onSearchChange &&
       prevProps.onPhotoOnlyChange === nextProps.onPhotoOnlyChange &&
-      prevProps.onDocumentOnlyChange === nextProps.onDocumentOnlyChange;
-    // Return true (don't re-render) if filters and callbacks are equal, regardless of searchTerm
+      prevProps.onDocumentOnlyChange === nextProps.onDocumentOnlyChange &&
+      prevProps.onToggleSidebar === nextProps.onToggleSidebar;
     return filtersEqual && callbacksEqual;
   },
 );
+
 DashboardHeader.displayName = 'DashboardHeader';
 
 const Dashboard = () => {
@@ -80,6 +77,7 @@ const Dashboard = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [isPhotoOnly, setIsPhotoOnly] = useState(false);
   const [isDocumentOnly, setIsDocumentOnly] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Debounce search term to avoid too many API calls
   useEffect(() => {
@@ -165,13 +163,21 @@ const Dashboard = () => {
         onPhotoOnlyChange={handlePhotoOnlyChange}
         isDocumentOnly={isDocumentOnly}
         onDocumentOnlyChange={handleDocumentOnlyChange}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
       <div className='dashboard-layout'>
-        <aside className='dashboard-sidebar'>
+        <div
+          className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+        <aside className={`dashboard-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
           <FolderTree
             folders={foldersData?.folders || []}
-            onFolderSelect={handleFolderSelect}
+            onFolderSelect={(id) => {
+              handleFolderSelect(id);
+              setIsSidebarOpen(false); // Close sidebar on selection
+            }}
             selectedFolderId={selectedFolderId}
             isLoading={foldersLoading}
           />

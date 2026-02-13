@@ -218,9 +218,76 @@ const FileTableRow = memo(
   },
 );
 
+const FileCard = memo(
+  ({
+    file,
+    onDelete,
+    onOpen,
+    isDeleting,
+  }: {
+    file: FileItemDto;
+    onDelete: (id: string, name: string) => void;
+    onOpen: (file: FileItemDto) => void;
+    isDeleting: boolean;
+  }) => {
+    const fileName = file.fileName || getFileName(file.path ?? '');
+
+    return (
+      <div className='file-card'>
+        <div className='file-card-header'>
+          <h3 className='file-card-title' title={fileName}>
+            {fileName}
+          </h3>
+          <span className='file-card-size'>{formatSize(file.size ?? 0)}</span>
+        </div>
+        <div className='file-card-details'>
+          <div className='file-card-info'>
+            <span className='info-label'>Type:</span>
+            <span className='info-value'>{file.mimeType || '-'}</span>
+          </div>
+          <div className='file-card-info'>
+            <span className='info-label'>Date:</span>
+            <span className='info-value'>
+              {file.createdDate ? new Date(file.createdDate).toLocaleDateString() : '-'}
+            </span>
+          </div>
+          {file.tags && file.tags.length > 0 && (
+            <div className='file-card-tags'>
+              {file.tags.map((tag) => (
+                <span key={tag} className='file-tag'>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className='file-card-actions'>
+          <button className='btn-open-small' onClick={() => onOpen(file)}>
+            Open
+          </button>
+          <button
+            className='btn-delete-small'
+            onClick={() => onDelete(file.id!, fileName)}
+            disabled={isDeleting}
+          >
+            {isDeleting ? '...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    );
+  },
+);
+
 const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
   const queryClient = useQueryClient();
   const [editingFile, setEditingFile] = useState<FileItemDto | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -279,56 +346,82 @@ const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
         Files{' '}
         <span className='text-[var(--text-tertiary)] text-base font-normal'>({totalCount})</span>
       </h2>
-      <div className='file-table-container bg-[var(--surface-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden shadow-sm'>
-        <table className='file-table w-full'>
-          <colgroup>
-            <col style={{ width: '30%' }} />
-            <col style={{ width: '10%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '20%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '10%' }} />
-          </colgroup>
-          <thead className='bg-[var(--bg-secondary)] border-b border-[var(--border-color)]'>
-            <tr>
-              <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>Name</th>
-              <th className='text-right py-3 px-4 font-medium text-[var(--text-secondary)]'>
-                Size
-              </th>
-              <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>Type</th>
-              <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>Tags</th>
-              <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>Date</th>
-              <th className='text-right py-3 px-4 font-medium text-[var(--text-secondary)]'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='divide-y divide-[var(--border-color)]'>
-            {files.length === 0 ? (
+      {isMobile ? (
+        <div className='file-cards-container'>
+          {files.length === 0 ? (
+            <div className='no-files'>No files found</div>
+          ) : (
+            files.map((file) => (
+              <FileCard
+                key={file.id}
+                file={file}
+                onDelete={handleDelete}
+                onOpen={handleOpen}
+                isDeleting={deleteMutation.isPending && deleteMutation.variables === file.id}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <div className='file-table-container bg-[var(--surface-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden shadow-sm'>
+          <table className='file-table w-full'>
+            <colgroup>
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '10%' }} />
+            </colgroup>
+            <thead className='bg-[var(--bg-secondary)] border-b border-[var(--border-color)]'>
               <tr>
-                <td
-                  colSpan={6}
-                  style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-tertiary)' }}
-                >
-                  No files found
-                </td>
+                <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Name
+                </th>
+                <th className='text-right py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Size
+                </th>
+                <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Type
+                </th>
+                <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Tags
+                </th>
+                <th className='text-left py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Date
+                </th>
+                <th className='text-right py-3 px-4 font-medium text-[var(--text-secondary)]'>
+                  Actions
+                </th>
               </tr>
-            ) : (
-              files.map((file, index) => (
-                <FileTableRow
-                  key={file.id}
-                  file={file}
-                  index={index}
-                  onDelete={handleDelete}
-                  onOpen={handleOpen}
-                  onEditTags={handleEditTags}
-                  isDeleting={deleteMutation.isPending && deleteMutation.variables === file.id}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className='divide-y divide-[var(--border-color)]'>
+              {files.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-tertiary)' }}
+                  >
+                    No files found
+                  </td>
+                </tr>
+              ) : (
+                files.map((file, index) => (
+                  <FileTableRow
+                    key={file.id}
+                    file={file}
+                    index={index}
+                    onDelete={handleDelete}
+                    onOpen={handleOpen}
+                    onEditTags={handleEditTags}
+                    isDeleting={deleteMutation.isPending && deleteMutation.variables === file.id}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {editingFile && (
         <TagEditor
@@ -345,5 +438,6 @@ const FileList = memo(({ files, isLoading, totalCount }: FileListProps) => {
 
 FileList.displayName = 'FileList';
 FileTableRow.displayName = 'FileTableRow';
+FileCard.displayName = 'FileCard';
 
 export default FileList;

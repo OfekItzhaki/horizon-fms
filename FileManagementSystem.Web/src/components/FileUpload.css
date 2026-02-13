@@ -88,3 +88,22 @@
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .upload-icon.large {
+    font-size: 2rem;
+  }
+
+  .upload-text.highlight {
+    font-size: 1.1rem;
+  }
+
+  .upload-text {
+    font-size: 0.9rem;
+  }
+}
